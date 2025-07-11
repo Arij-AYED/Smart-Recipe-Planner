@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
-import { Search, Calendar, ChefHat, Clock, Users, Heart, Plus, Filter } from 'lucide-react';
+import { Search, Calendar, ChefHat, Clock, Users, Heart, Plus, Filter, User } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -106,26 +107,35 @@ const Index = () => {
               </h1>
             </div>
             
-            <nav className="flex space-x-1 bg-gray-100 rounded-lg p-1">
-              {[
-                { id: 'discover', label: 'Discover', icon: Search },
-                { id: 'planner', label: 'Meal Planner', icon: Calendar },
-                { id: 'ingredients', label: 'Ingredients', icon: Plus }
-              ].map(({ id, label, icon: Icon }) => (
-                <button
-                  key={id}
-                  onClick={() => setSelectedTab(id)}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-md font-medium transition-all ${
-                    selectedTab === id
-                      ? 'bg-white text-orange-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span>{label}</span>
-                </button>
-              ))}
-            </nav>
+            <div className="flex items-center space-x-4">
+              <nav className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+                {[
+                  { id: 'discover', label: 'Discover', icon: Search },
+                  { id: 'planner', label: 'Meal Planner', icon: Calendar },
+                  { id: 'ingredients', label: 'Ingredients', icon: Plus }
+                ].map(({ id, label, icon: Icon }) => (
+                  <button
+                    key={id}
+                    onClick={() => setSelectedTab(id)}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-md font-medium transition-all ${
+                      selectedTab === id
+                        ? 'bg-white text-orange-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span>{label}</span>
+                  </button>
+                ))}
+              </nav>
+              
+              <Link to="/login">
+                <Button variant="outline" className="text-orange-600 border-orange-200 hover:bg-orange-50">
+                  <User className="w-4 h-4 mr-2" />
+                  Login
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </header>
