@@ -1,11 +1,12 @@
 
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChefHat, Mail, Lock, Eye, EyeOff, User } from 'lucide-react';
+import { ChefHat, Mail, Lock, Eye, EyeOff, User, Upload, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -13,11 +14,13 @@ const Signup = () => {
     lastName: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    role: 'user'
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [certificateFile, setCertificateFile] = useState(null);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,11 +31,23 @@ const Signup = () => {
       setIsLoading(false);
       // Here you would integrate with your authentication system
       console.log('Signup attempt:', formData);
+      if (certificateFile) {
+        console.log('Certificate file:', certificateFile);
+      }
     }, 1000);
   };
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleCertificateUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type === 'application/pdf') {
+      setCertificateFile(file);
+    } else {
+      alert('Please upload a PDF file only');
+    }
   };
 
   return (
@@ -59,6 +74,33 @@ const Signup = () => {
           
           <CardContent>
             <form onSubmit={handleSignup} className="space-y-4">
+              {/* Role Selection */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium text-gray-700">
+                  I want to join as:
+                </Label>
+                <RadioGroup
+                  value={formData.role}
+                  onValueChange={(value) => handleInputChange('role', value)}
+                  className="grid grid-cols-2 gap-4"
+                >
+                  <div className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-gray-50">
+                    <RadioGroupItem value="user" id="user" />
+                    <Label htmlFor="user" className="flex items-center gap-2 cursor-pointer">
+                      <User className="h-4 w-4" />
+                      User
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-gray-50">
+                    <RadioGroupItem value="chef" id="chef" />
+                    <Label htmlFor="chef" className="flex items-center gap-2 cursor-pointer">
+                      <ChefHat className="h-4 w-4" />
+                      Chef
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
               {/* Name Fields */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
@@ -168,6 +210,37 @@ const Signup = () => {
                 </div>
               </div>
 
+              {/* Certificate Upload for Chefs */}
+              {formData.role === 'chef' && (
+                <div className="space-y-2">
+                  <Label htmlFor="certificate" className="text-sm font-medium text-gray-700">
+                    Chef Certificate (PDF)
+                  </Label>
+                  <div className="relative">
+                    <input
+                      id="certificate"
+                      type="file"
+                      accept=".pdf"
+                      onChange={handleCertificateUpload}
+                      className="hidden"
+                    />
+                    <Label
+                      htmlFor="certificate"
+                      className="flex items-center gap-3 p-3 border border-gray-200 rounded-md cursor-pointer hover:bg-gray-50"
+                    >
+                      <Upload className="h-4 w-4 text-gray-400" />
+                      <span className="text-sm text-gray-600">
+                        {certificateFile ? certificateFile.name : 'Upload your chef certificate (PDF)'}
+                      </span>
+                      {certificateFile && <FileText className="h-4 w-4 text-green-600" />}
+                    </Label>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    Upload your culinary certificate or professional qualification
+                  </p>
+                </div>
+              )}
+
               {/* Terms & Conditions */}
               <div className="flex items-start space-x-2 text-sm">
                 <input 
@@ -194,7 +267,7 @@ const Signup = () => {
                 disabled={isLoading}
                 className="w-full bg-gradient-to-r from-orange-500 to-green-500 hover:from-orange-600 hover:to-green-600 text-white font-medium py-2.5"
               >
-                {isLoading ? 'Creating Account...' : 'Create Account'}
+                {isLoading ? 'Creating Account...' : `Create ${formData.role === 'chef' ? 'Chef' : 'User'} Account`}
               </Button>
             </form>
 
@@ -205,7 +278,6 @@ const Signup = () => {
               <div className="flex-1 border-t border-gray-200"></div>
             </div>
 
-            {/* Social Signup Options */}
             <div className="space-y-3">
               <Button
                 type="button"
@@ -222,7 +294,6 @@ const Signup = () => {
               </Button>
             </div>
 
-            {/* Login Link */}
             <div className="mt-6 text-center text-sm text-gray-600">
               Already have an account?{' '}
               <Link to="/login" className="text-orange-600 hover:text-orange-700 font-medium">
@@ -232,7 +303,6 @@ const Signup = () => {
           </CardContent>
         </Card>
 
-        {/* Back to Home */}
         <div className="mt-6 text-center">
           <Link to="/" className="text-sm text-gray-600 hover:text-gray-800">
             ← Back to Home

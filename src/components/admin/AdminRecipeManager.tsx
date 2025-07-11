@@ -3,117 +3,115 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Check, X, Eye, Clock, ChefHat } from 'lucide-react';
-
-interface Recipe {
-  id: string;
-  title: string;
-  author: string;
-  status: 'pending' | 'approved' | 'rejected';
-  submittedAt: string;
-  cookTime: string;
-  difficulty: string;
-  tags: string[];
-}
+import { Eye, Check, X, Clock, Users, ChefHat } from 'lucide-react';
+import { RecipePreview } from './RecipePreview';
 
 export const AdminRecipeManager = () => {
-  const [recipes, setRecipes] = useState<Recipe[]>([
+  const [recipes, setRecipes] = useState([
     {
-      id: '1',
-      title: 'Spicy Thai Basil Chicken',
-      author: 'John Doe',
-      status: 'pending',
-      submittedAt: '2024-01-15',
-      cookTime: '25 min',
-      difficulty: 'Medium',
-      tags: ['Thai', 'Spicy', 'Chicken']
+      id: 1,
+      title: "Spaghetti Carbonara",
+      chef: "Marco Rossi",
+      description: "Classic Italian pasta dish with eggs, cheese, and pancetta",
+      cookTime: "20 mins",
+      servings: 4,
+      difficulty: "Medium",
+      status: "Pending",
+      submittedAt: "2024-01-15",
+      image: "/placeholder.svg",
+      ingredients: "400g spaghetti\n200g pancetta\n4 large eggs\n100g Pecorino Romano cheese\nBlack pepper\nSalt",
+      instructions: "Cook spaghetti in salted boiling water\nFry pancetta until crispy\nWhisk eggs with cheese and pepper\nCombine hot pasta with pancetta\nAdd egg mixture and toss quickly"
     },
     {
-      id: '2',
-      title: 'Vegan Buddha Bowl',
-      author: 'Jane Smith',
-      status: 'pending',
-      submittedAt: '2024-01-14',
-      cookTime: '20 min',
-      difficulty: 'Easy',
-      tags: ['Vegan', 'Healthy', 'Bowl']
+      id: 2,
+      title: "Chicken Tikka Masala",
+      chef: "Priya Sharma",
+      description: "Creamy Indian curry with tender chicken pieces",
+      cookTime: "45 mins",
+      servings: 6,
+      difficulty: "Hard",
+      status: "Approved",
+      submittedAt: "2024-01-14",
+      image: "/placeholder.svg",
+      ingredients: "1kg chicken breast\n400ml coconut milk\n400g canned tomatoes\n2 onions\nGinger-garlic paste\nGaram masala\nTurmeric\nCumin\nCoriander",
+      instructions: "Marinate chicken in yogurt and spices\nGrill chicken until charred\nSauté onions until golden\nAdd spices and cook until fragrant\nAdd tomatoes and simmer\nAdd grilled chicken and coconut milk\nSimmer until thick and creamy"
     },
     {
-      id: '3',
-      title: 'Classic Beef Bourguignon',
-      author: 'Mike Johnson',
-      status: 'approved',
-      submittedAt: '2024-01-13',
-      cookTime: '3 hours',
-      difficulty: 'Hard',
-      tags: ['French', 'Beef', 'Stew']
-    },
-    {
-      id: '4',
-      title: 'Quick Pasta Carbonara',
-      author: 'Sarah Wilson',
-      status: 'rejected',
-      submittedAt: '2024-01-12',
-      cookTime: '15 min',
-      difficulty: 'Easy',
-      tags: ['Italian', 'Pasta', 'Quick']
+      id: 3,
+      title: "Chocolate Lava Cake",
+      chef: "Sophie Martin",
+      description: "Decadent chocolate dessert with molten center",
+      cookTime: "25 mins",
+      servings: 2,
+      difficulty: "Medium",
+      status: "Rejected",
+      submittedAt: "2024-01-13",
+      image: "/placeholder.svg",
+      ingredients: "100g dark chocolate\n100g butter\n2 eggs\n50g sugar\n30g flour\nButter for ramekins",
+      instructions: "Melt chocolate and butter\nWhisk eggs and sugar\nCombine chocolate mixture with eggs\nFold in flour\nPour into buttered ramekins\nBake at 200°C for 12 minutes"
     }
   ]);
 
-  const handleRecipeAction = (recipeId: string, action: 'approve' | 'reject') => {
-    setRecipes(prev => prev.map(recipe => 
-      recipe.id === recipeId 
-        ? { ...recipe, status: action === 'approve' ? 'approved' : 'rejected' }
-        : recipe
-    ));
+  const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+
+  const handlePreview = (recipe) => {
+    setSelectedRecipe(recipe);
+    setPreviewOpen(true);
   };
 
-  const getStatusBadge = (status: Recipe['status']) => {
+  const handleApprove = (id) => {
+    setRecipes(recipes.map(recipe => 
+      recipe.id === id ? { ...recipe, status: 'Approved' } : recipe
+    ));
+    setPreviewOpen(false);
+  };
+
+  const handleReject = (id) => {
+    setRecipes(recipes.map(recipe => 
+      recipe.id === id ? { ...recipe, status: 'Rejected' } : recipe
+    ));
+    setPreviewOpen(false);
+  };
+
+  const getStatusColor = (status) => {
     switch (status) {
-      case 'pending':
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200"><Clock className="h-3 w-3 mr-1" />Pending</Badge>;
-      case 'approved':
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200"><Check className="h-3 w-3 mr-1" />Approved</Badge>;
-      case 'rejected':
-        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200"><X className="h-3 w-3 mr-1" />Rejected</Badge>;
+      case 'Approved': return 'bg-green-100 text-green-800';
+      case 'Pending': return 'bg-yellow-100 text-yellow-800';
+      case 'Rejected': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const pendingCount = recipes.filter(r => r.status === 'pending').length;
+  const pendingCount = recipes.filter(r => r.status === 'Pending').length;
+  const approvedCount = recipes.filter(r => r.status === 'Approved').length;
+  const rejectedCount = recipes.filter(r => r.status === 'Rejected').length;
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Reviews</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Pending Review</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{pendingCount}</div>
+            <div className="text-2xl font-bold text-yellow-600">{pendingCount}</div>
           </CardContent>
         </Card>
-        
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Recipes</CardTitle>
-            <ChefHat className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Approved</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{recipes.length}</div>
+            <div className="text-2xl font-bold text-green-600">{approvedCount}</div>
           </CardContent>
         </Card>
-        
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Approval Rate</CardTitle>
-            <Check className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Rejected</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {Math.round((recipes.filter(r => r.status === 'approved').length / recipes.length) * 100)}%
-            </div>
+            <div className="text-2xl font-bold text-red-600">{rejectedCount}</div>
           </CardContent>
         </Card>
       </div>
@@ -124,69 +122,76 @@ export const AdminRecipeManager = () => {
           <CardDescription>Review and manage submitted recipes</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Recipe</TableHead>
-                <TableHead>Author</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Submitted</TableHead>
-                <TableHead>Cook Time</TableHead>
-                <TableHead>Difficulty</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {recipes.map((recipe) => (
-                <TableRow key={recipe.id}>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{recipe.title}</div>
-                      <div className="flex gap-1 mt-1">
-                        {recipe.tags.map(tag => (
-                          <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
-                        ))}
-                      </div>
+          <div className="space-y-4">
+            {recipes.map((recipe) => (
+              <div key={recipe.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h3 className="font-semibold">{recipe.title}</h3>
+                    <Badge className={getStatusColor(recipe.status)}>
+                      {recipe.status}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-2">by {recipe.chef}</p>
+                  <div className="flex items-center gap-4 text-sm text-gray-500">
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-4 w-4" />
+                      {recipe.cookTime}
                     </div>
-                  </TableCell>
-                  <TableCell>{recipe.author}</TableCell>
-                  <TableCell>{getStatusBadge(recipe.status)}</TableCell>
-                  <TableCell>{recipe.submittedAt}</TableCell>
-                  <TableCell>{recipe.cookTime}</TableCell>
-                  <TableCell>{recipe.difficulty}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        <Eye className="h-4 w-4" />
+                    <div className="flex items-center gap-1">
+                      <Users className="h-4 w-4" />
+                      {recipe.servings}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <ChefHat className="h-4 w-4" />
+                      {recipe.difficulty}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePreview(recipe)}
+                  >
+                    <Eye className="h-4 w-4 mr-1" />
+                    Preview
+                  </Button>
+                  {recipe.status === 'Pending' && (
+                    <>
+                      <Button
+                        size="sm"
+                        onClick={() => handleApprove(recipe.id)}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <Check className="h-4 w-4 mr-1" />
+                        Approve
                       </Button>
-                      {recipe.status === 'pending' && (
-                        <>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="text-green-600 hover:bg-green-50"
-                            onClick={() => handleRecipeAction(recipe.id, 'approve')}
-                          >
-                            <Check className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="text-red-600 hover:bg-red-50"
-                            onClick={() => handleRecipeAction(recipe.id, 'reject')}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleReject(recipe.id)}
+                        className="text-red-600 border-red-200 hover:bg-red-50"
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Reject
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
+
+      <RecipePreview
+        recipe={selectedRecipe}
+        isOpen={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        onApprove={handleApprove}
+        onReject={handleReject}
+      />
     </div>
   );
 };
