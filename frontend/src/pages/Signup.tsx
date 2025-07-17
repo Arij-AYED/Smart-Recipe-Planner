@@ -1,12 +1,12 @@
-
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ChefHat, Mail, Lock, Eye, EyeOff, User, Upload, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import axios from 'axios';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -20,21 +20,50 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [certificateFile, setCertificateFile] = useState(null);
+  const [certificateFile, setCertificateFile] = useState<File | null>(null);
+  const navigate = useNavigate();
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // Simulate signup process
-    setTimeout(() => {
+
+    if (formData.password !== formData.confirmPassword) {
+      alert('Passwords do not match');
       setIsLoading(false);
-      // Here you would integrate with your authentication system
-      console.log('Signup attempt:', formData);
-      if (certificateFile) {
-        console.log('Certificate file:', certificateFile);
-      }
-    }, 1000);
+      return;
+    }
+
+    if (formData.role === 'chef' && !certificateFile) {
+      alert('Please upload a chef certificate');
+      setIsLoading(false);
+      return;
+    }
+
+    const form = new FormData();
+    form.append('firstname', formData.firstName);
+    form.append('lastname', formData.lastName);
+    form.append('email', formData.email);
+    form.append('password', formData.password);
+    form.append('role', formData.role);
+    if (certificateFile) {
+      form.append('certificate', certificateFile);
+    }
+
+    try {
+      const response = await axios.post('http://localhost:3000/api/register', form, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      console.log('Signup response:', response.data);
+      alert('Signup successful! Please log in.');
+      navigate('/login');
+    } catch (error) {
+      console.error('Signup error:', error.response?.data || error.message);
+      alert(error.response?.data?.error || 'Signup failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -53,7 +82,6 @@ const Signup = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-green-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Logo/Brand */}
         <div className="flex items-center justify-center space-x-3 mb-8">
           <div className="w-12 h-12 bg-gradient-to-r from-orange-400 to-green-400 rounded-full flex items-center justify-center">
             <ChefHat className="w-7 h-7 text-white" />
@@ -63,7 +91,6 @@ const Signup = () => {
           </h1>
         </div>
 
-        {/* Signup Card */}
         <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
           <CardHeader className="space-y-2 text-center">
             <CardTitle className="text-2xl font-bold text-gray-900">Create Account</CardTitle>
@@ -74,7 +101,6 @@ const Signup = () => {
           
           <CardContent>
             <form onSubmit={handleSignup} className="space-y-4">
-              {/* Role Selection */}
               <div className="space-y-3">
                 <Label className="text-sm font-medium text-gray-700">
                   I want to join as:
@@ -101,7 +127,6 @@ const Signup = () => {
                 </RadioGroup>
               </div>
 
-              {/* Name Fields */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label htmlFor="firstName" className="text-sm font-medium text-gray-700">
@@ -139,7 +164,6 @@ const Signup = () => {
                 </div>
               </div>
 
-              {/* Email Field */}
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium text-gray-700">
                   Email Address
@@ -158,7 +182,6 @@ const Signup = () => {
                 </div>
               </div>
 
-              {/* Password Field */}
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-sm font-medium text-gray-700">
                   Password
@@ -184,7 +207,6 @@ const Signup = () => {
                 </div>
               </div>
 
-              {/* Confirm Password Field */}
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
                   Confirm Password
@@ -210,7 +232,6 @@ const Signup = () => {
                 </div>
               </div>
 
-              {/* Certificate Upload for Chefs */}
               {formData.role === 'chef' && (
                 <div className="space-y-2">
                   <Label htmlFor="certificate" className="text-sm font-medium text-gray-700">
@@ -241,7 +262,6 @@ const Signup = () => {
                 </div>
               )}
 
-              {/* Terms & Conditions */}
               <div className="flex items-start space-x-2 text-sm">
                 <input 
                   type="checkbox" 
@@ -261,7 +281,6 @@ const Signup = () => {
                 </label>
               </div>
 
-              {/* Signup Button */}
               <Button
                 type="submit"
                 disabled={isLoading}
@@ -271,7 +290,6 @@ const Signup = () => {
               </Button>
             </form>
 
-            {/* Divider */}
             <div className="my-6 flex items-center">
               <div className="flex-1 border-t border-gray-200"></div>
               <span className="px-4 text-sm text-gray-500">or</span>
