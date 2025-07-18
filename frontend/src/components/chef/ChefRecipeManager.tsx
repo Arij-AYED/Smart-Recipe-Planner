@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, Clock, Users, ChefHat } from 'lucide-react';
 
-const API_URL = 'http://localhost:5000'; // Matches backend port
+const API_URL = 'http://localhost:3000'; // Matches backend port
 
 export const ChefRecipeManager = () => {
   const [recipes, setRecipes] = useState([]);
