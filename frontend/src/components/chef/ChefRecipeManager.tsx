@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, Clock, Users, ChefHat } from 'lucide-react';
 
-const API_URL = 'http://localhost:5000'; // Adjust if backend runs on a different port
+const API_URL = 'http://localhost:5000'; // Matches backend port
 
 export const ChefRecipeManager = () => {
   const [recipes, setRecipes] = useState([]);
@@ -91,11 +91,11 @@ export const ChefRecipeManager = () => {
   const handleDeleteRecipe = async (id) => {
     try {
       await axios.delete(`${API_URL}/recipes/${id}`);
-      // Refetch recipes
+      // Refetch recipes after deletion
       const response = await axios.get(`${API_URL}/recipes`);
       setRecipes(response.data);
     } catch (error) {
-      console.error('Error deleting recipe:', error);
+      console.error('Error deleting recipe:', error.response?.data || error.message);
     }
   };
 
@@ -219,7 +219,7 @@ export const ChefRecipeManager = () => {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="image">Image</Label>
+                <Label htmlFor="image">Image (Please select from Downloads folder)</Label>
                 <Input
                   id="image"
                   type="file"
@@ -251,9 +251,10 @@ export const ChefRecipeManager = () => {
           <Card key={recipe._id} className="overflow-hidden">
             <div className="aspect-video bg-gray-100 relative">
               <img
-                src={recipe.image || '/placeholder.svg'}
+                src={`${API_URL}${recipe.image || '/placeholder.svg'}`} // Use full backend URL
                 alt={recipe.title}
                 className="w-full h-full object-cover"
+                onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }} // Fallback if image fails
               />
               <Badge className={`absolute top-2 right-2 ${getStatusColor(recipe.status)}`}>
                 {recipe.status}
