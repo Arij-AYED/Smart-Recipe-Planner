@@ -1,11 +1,11 @@
 const express = require ('express');
-const bcrypt = require('bcryptjs');
-const jwt = require ('jsonwebtoken');
-const User = require ('../models/User');
+const bcrypt = require('bcryptjs'); //for password hashing
+const jwt = require ('jsonwebtoken'); //for generating tokens
+const User = require ('../models/User'); //user model
 const router = express.Router();
-const multer=require('multer');
-const path=require('path');
-const fs = require('fs');
+const multer=require('multer'); //file uploads
+const path=require('path'); //handle file path
+const fs = require('fs'); //create folders if needed
 
 //configure file uploads
 const storage=multer.diskStorage({

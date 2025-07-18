@@ -1,8 +1,11 @@
 require ('dotenv').config();
 const express = require('express');
 const mongoose = require ('mongoose');
+const cors = require('cors'); // allows frontend to access backend
+
+const adminRoutes=require('./routes/admin');
 const authRoutes = require ('./routes/auth');
-const cors = require('cors');
+const userRoutes = require('./routes/users');
 
 const app = express();
 app.use(cors());
@@ -16,6 +19,9 @@ mongoose.connect(process.env.MONGO_URI)
 
 //use auth routes
 app.use('/api',authRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/users', userRoutes); 
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
