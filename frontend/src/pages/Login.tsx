@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import axios from 'axios';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -16,14 +17,20 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
+   try {
+  const response = await axios.post('http://localhost:3000/api/login', { email, password });
+  console.log('Login response:', response.data);
+  const { token } = response.data;
+  localStorage.setItem('token', token);
+  alert('Login successful!');
+} catch (error) {
+  console.error('Login error:', error.response?.data || error.message);
+  alert(error.response?.data?.error || 'Login failed');
+}
+
+  }
     
-    // Simulate login process
-    setTimeout(() => {
-      setIsLoading(false);
-      // Here you would integrate with your authentication system
-      console.log('Login attempt:', { email, password });
-    }, 1000);
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-green-50 flex items-center justify-center p-4">
