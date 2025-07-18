@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Calendar, ChefHat, Clock, Users, Heart, Plus, Filter, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,79 +8,27 @@ import { Badge } from '@/components/ui/badge';
 import RecipeCard from '@/components/RecipeCard';
 import MealPlannerCalendar from '@/components/MealPlannerCalendar';
 import IngredientSearch from '@/components/IngredientSearch';
+import axios from 'axios';
+
+const API_URL = 'http://localhost:5000';
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTab, setSelectedTab] = useState('discover');
+  const [recipes, setRecipes] = useState([]);
 
-  const featuredRecipes = [
-    {
-      id: 1,
-      title: "Grilled Salmon with Quinoa",
-      image: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400&h=300&fit=crop",
-      cookTime: "25 min",
-      servings: 4,
-      difficulty: "Easy",
-      tags: ["High Protein", "Gluten Free", "Heart Healthy"],
-      calories: 420,
-      ingredients: ["Salmon", "Quinoa", "Broccoli", "Lemon"]
-    },
-    {
-      id: 2,
-      title: "Mediterranean Chickpea Bowl",
-      image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=300&fit=crop",
-      cookTime: "15 min",
-      servings: 2,
-      difficulty: "Easy",
-      tags: ["Vegan", "High Fiber", "Mediterranean"],
-      calories: 380,
-      ingredients: ["Chickpeas", "Cucumber", "Tomatoes", "Olive Oil"]
-    },
-    {
-      id: 3,
-      title: "Chicken Stir Fry",
-      image: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=400&h=300&fit=crop",
-      cookTime: "20 min",
-      servings: 3,
-      difficulty: "Medium",
-      tags: ["High Protein", "Low Carb", "Asian"],
-      calories: 350,
-      ingredients: ["Chicken Breast", "Bell Peppers", "Broccoli", "Soy Sauce"]
-    },
-    {
-      id: 4,
-      title: "Avocado Toast Supreme",
-      image: "https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?w=400&h=300&fit=crop",
-      cookTime: "10 min",
-      servings: 1,
-      difficulty: "Easy",
-      tags: ["Vegetarian", "Heart Healthy", "Quick"],
-      calories: 280,
-      ingredients: ["Avocado", "Sourdough", "Tomato", "Feta"]
-    },
-    {
-      id: 5,
-      title: "Berry Protein Smoothie",
-      image: "https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=400&h=300&fit=crop",
-      cookTime: "5 min",
-      servings: 1,
-      difficulty: "Easy",
-      tags: ["High Protein", "Antioxidants", "Post-Workout"],
-      calories: 250,
-      ingredients: ["Berries", "Protein Powder", "Banana", "Almond Milk"]
-    },
-    {
-      id: 6,
-      title: "Lentil Curry",
-      image: "https://images.unsplash.com/photo-1585032226651-759b368d7246?w=400&h=300&fit=crop",
-      cookTime: "35 min",
-      servings: 4,
-      difficulty: "Medium",
-      tags: ["Vegan", "High Fiber", "Indian", "Comfort Food"],
-      calories: 320,
-      ingredients: ["Red Lentils", "Coconut Milk", "Spinach", "Curry Spices"]
-    }
-  ];
+  // Fetch approved recipes from backend
+  useEffect(() => {
+    const fetchRecipes = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/recipes`);
+        setRecipes(response.data);
+      } catch (error) {
+        console.error('Error fetching recipes:', error);
+      }
+    };
+    fetchRecipes();
+  }, []);
 
   const quickGoals = [
     { label: "High Protein", icon: "💪", color: "bg-orange-100 text-orange-800" },
@@ -201,8 +148,8 @@ const Index = () => {
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {featuredRecipes.map((recipe) => (
-                  <RecipeCard key={recipe.id} recipe={recipe} />
+                {recipes.map((recipe) => (
+                  <RecipeCard key={recipe._id} recipe={recipe} />
                 ))}
               </div>
             </div>
