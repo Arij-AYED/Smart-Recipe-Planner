@@ -1,5 +1,6 @@
-
-import React, { useState } from 'react';
+// frontend/src/components/chef/ChefRecipeManager.tsx
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,30 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, Clock, Users, ChefHat } from 'lucide-react';
 
-export const ChefRecipeManager = () => {
-  const [recipes, setRecipes] = useState([
-    {
-      id: 1,
-      title: "Spaghetti Carbonara",
-      description: "Classic Italian pasta dish with eggs, cheese, and pancetta",
-      cookTime: "20 mins",
-      servings: 4,
-      difficulty: "Medium",
-      status: "Approved",
-      image: "/placeholder.svg"
-    },
-    {
-      id: 2,
-      title: "Chicken Tikka Masala",
-      description: "Creamy Indian curry with tender chicken pieces",
-      cookTime: "45 mins",
-      servings: 6,
-      difficulty: "Hard",
-      status: "Pending",
-      image: "/placeholder.svg"
-    }
-  ]);
+const API_URL = 'http://localhost:5000'; // Adjust if backend runs on a different port
 
+export const ChefRecipeManager = () => {
+  const [recipes, setRecipes] = useState([]);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState(null);
   const [formData, setFormData] = useState({
@@ -43,31 +24,95 @@ export const ChefRecipeManager = () => {
     servings: '',
     difficulty: '',
     ingredients: '',
-    instructions: ''
+    instructions: '',
+    image: null as File | null, // Add image field for upload
   });
 
-  const handleCreateRecipe = () => {
-    const newRecipe = {
-      id: Date.now(),
-      ...formData,
-      status: "Pending",
-      image: "/placeholder.svg"
+  // Fetch recipes from backend
+  useEffect(() => {
+    const fetchRecipes = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/recipes`);
+        setRecipes(response.data);
+      } catch (error) {
+        console.error('Error fetching recipes:', error);
+      }
     };
-    setRecipes([...recipes, newRecipe]);
-    setFormData({
-      title: '',
-      description: '',
-      cookTime: '',
-      servings: '',
-      difficulty: '',
-      ingredients: '',
-      instructions: ''
-    });
-    setIsCreateOpen(false);
+    fetchRecipes();
+  }, []);
+
+  // Handle creating or updating a recipe
+  const handleSaveRecipe = async () => {
+    const dataToSend = new FormData();
+    dataToSend.append('title', formData.title);
+    dataToSend.append('description', formData.description);
+    dataToSend.append('cookTime', formData.cookTime);
+    dataToSend.append('servings', formData.servings);
+    dataToSend.append('difficulty', formData.difficulty);
+    dataToSend.append('ingredients', formData.ingredients);
+    dataToSend.append('instructions', formData.instructions);
+    if (formData.image) {
+      dataToSend.append('image', formData.image);
+    }
+
+    try {
+      if (editingRecipe) {
+        // Update existing recipe
+        await axios.put(`${API_URL}/recipes/${editingRecipe._id}`, dataToSend, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+      } else {
+        // Create new recipe
+        await axios.post(`${API_URL}/recipes`, dataToSend, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+      }
+      // Refetch recipes
+      const response = await axios.get(`${API_URL}/recipes`);
+      setRecipes(response.data);
+      setFormData({
+        title: '',
+        description: '',
+        cookTime: '',
+        servings: '',
+        difficulty: '',
+        ingredients: '',
+        instructions: '',
+        image: null,
+      });
+      setEditingRecipe(null);
+      setIsCreateOpen(false);
+    } catch (error) {
+      console.error('Error saving recipe:', error.response?.data || error.message);
+    }
   };
 
-  const handleDeleteRecipe = (id) => {
-    setRecipes(recipes.filter(recipe => recipe.id !== id));
+  // Handle deleting a recipe
+  const handleDeleteRecipe = async (id) => {
+    try {
+      await axios.delete(`${API_URL}/recipes/${id}`);
+      // Refetch recipes
+      const response = await axios.get(`${API_URL}/recipes`);
+      setRecipes(response.data);
+    } catch (error) {
+      console.error('Error deleting recipe:', error);
+    }
+  };
+
+  // Handle edit button click
+  const handleEditRecipe = (recipe) => {
+    setEditingRecipe(recipe);
+    setFormData({
+      title: recipe.title,
+      description: recipe.description,
+      cookTime: recipe.cookTime,
+      servings: recipe.servings.toString(),
+      difficulty: recipe.difficulty,
+      ingredients: recipe.ingredients,
+      instructions: recipe.instructions,
+      image: null, // Image will be uploaded anew
+    });
+    setIsCreateOpen(true);
   };
 
   const getStatusColor = (status) => {
@@ -90,14 +135,14 @@ export const ChefRecipeManager = () => {
           <DialogTrigger asChild>
             <Button className="bg-orange-500 hover:bg-orange-600">
               <Plus className="h-4 w-4 mr-2" />
-              Create Recipe
+              {editingRecipe ? 'Edit Recipe' : 'Create Recipe'}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Create New Recipe</DialogTitle>
+              <DialogTitle>{editingRecipe ? 'Edit Recipe' : 'Create New Recipe'}</DialogTitle>
               <DialogDescription>
-                Add a new recipe to your collection
+                {editingRecipe ? 'Update an existing recipe' : 'Add a new recipe to your collection'}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -173,13 +218,28 @@ export const ChefRecipeManager = () => {
                   rows={6}
                 />
               </div>
+              <div className="grid gap-2">
+                <Label htmlFor="image">Image</Label>
+                <Input
+                  id="image"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    setFormData({...formData, image: file || null});
+                  }}
+                />
+              </div>
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+              <Button variant="outline" onClick={() => {
+                setIsCreateOpen(false);
+                setEditingRecipe(null);
+              }}>
                 Cancel
               </Button>
-              <Button onClick={handleCreateRecipe} className="bg-orange-500 hover:bg-orange-600">
-                Create Recipe
+              <Button onClick={handleSaveRecipe} className="bg-orange-500 hover:bg-orange-600">
+                {editingRecipe ? 'Update Recipe' : 'Create Recipe'}
               </Button>
             </div>
           </DialogContent>
@@ -188,10 +248,10 @@ export const ChefRecipeManager = () => {
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {recipes.map((recipe) => (
-          <Card key={recipe.id} className="overflow-hidden">
+          <Card key={recipe._id} className="overflow-hidden">
             <div className="aspect-video bg-gray-100 relative">
               <img
-                src={recipe.image}
+                src={recipe.image || '/placeholder.svg'}
                 alt={recipe.title}
                 className="w-full h-full object-cover"
               />
@@ -219,14 +279,14 @@ export const ChefRecipeManager = () => {
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => handleEditRecipe(recipe)}>
                   <Edit className="h-4 w-4 mr-1" />
                   Edit
                 </Button>
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={() => handleDeleteRecipe(recipe.id)}
+                  onClick={() => handleDeleteRecipe(recipe._id)}
                   className="text-red-600 hover:text-red-700"
                 >
                   <Trash2 className="h-4 w-4 mr-1" />
