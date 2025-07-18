@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
@@ -9,9 +8,11 @@ interface RecipePreviewProps {
   recipe: any;
   isOpen: boolean;
   onClose: () => void;
-  onApprove: (id: number) => void;
-  onReject: (id: number) => void;
+  onApprove: (id: string) => void;
+  onReject: (id: string) => void;
 }
+
+const API_URL = 'http://localhost:5000';
 
 export const RecipePreview: React.FC<RecipePreviewProps> = ({
   recipe,
@@ -42,7 +43,7 @@ export const RecipePreview: React.FC<RecipePreviewProps> = ({
             </Badge>
           </div>
           <DialogDescription>
-            Recipe by {recipe.chef} • Submitted on {new Date(recipe.submittedAt).toLocaleDateString()}
+            Recipe by {recipe.chefId || 'Unknown Chef'} • Submitted on {new Date().toLocaleDateString()}
           </DialogDescription>
         </DialogHeader>
 
@@ -50,7 +51,7 @@ export const RecipePreview: React.FC<RecipePreviewProps> = ({
           {/* Recipe Image */}
           <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
             <img
-              src={recipe.image}
+              src={`${API_URL}${recipe.image || '/placeholder.svg'}`}
               alt={recipe.title}
               className="w-full h-full object-cover"
             />
@@ -79,7 +80,25 @@ export const RecipePreview: React.FC<RecipePreviewProps> = ({
                 <p className="font-semibold">{recipe.difficulty}</p>
               </div>
             </div>
+            {recipe.calories > 0 && (
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-gray-600">Calories</p>
+                <p className="font-semibold">{recipe.calories}</p>
+              </div>
+            )}
           </div>
+
+          {/* Tags */}
+          {recipe.tags && recipe.tags.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Tags</h3>
+              <div className="flex flex-wrap gap-1">
+                {recipe.tags.map((tag) => (
+                  <Badge key={tag} className="bg-blue-100 text-blue-800">{tag}</Badge>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Description */}
           <div>
@@ -119,14 +138,14 @@ export const RecipePreview: React.FC<RecipePreviewProps> = ({
           {recipe.status === 'Pending' && (
             <div className="flex gap-3 pt-4 border-t">
               <Button
-                onClick={() => onApprove(recipe.id)}
+                onClick={() => onApprove(recipe._id)}
                 className="flex-1 bg-green-600 hover:bg-green-700"
               >
                 <Check className="h-4 w-4 mr-2" />
                 Approve Recipe
               </Button>
               <Button
-                onClick={() => onReject(recipe.id)}
+                onClick={() => onReject(recipe._id)}
                 variant="outline"
                 className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
               >

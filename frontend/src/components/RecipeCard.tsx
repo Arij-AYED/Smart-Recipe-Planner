@@ -1,12 +1,13 @@
-
 import { Clock, Users, Heart, Bookmark } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 
+const API_URL = 'http://localhost:5000';
+
 interface Recipe {
-  id: number;
+  _id: string;
   title: string;
   image: string;
   cookTime: string;
@@ -14,7 +15,7 @@ interface Recipe {
   difficulty: string;
   tags: string[];
   calories: number;
-  ingredients: string[];
+  ingredients: string;
 }
 
 interface RecipeCardProps {
@@ -42,7 +43,7 @@ const RecipeCard = ({ recipe }: RecipeCardProps) => {
     <Card className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-0 bg-white/80 backdrop-blur-sm overflow-hidden">
       <div className="relative">
         <img
-          src={recipe.image}
+          src={`${API_URL}${recipe.image || '/placeholder.svg'}`}
           alt={recipe.title}
           className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
         />
@@ -108,7 +109,7 @@ const RecipeCard = ({ recipe }: RecipeCardProps) => {
         <div className="pt-2">
           <Button 
             className="w-full bg-gradient-to-r from-orange-500 to-green-500 hover:from-orange-600 hover:to-green-600 text-white"
-            onClick={() => console.log('View recipe:', recipe.id)}
+            onClick={() => console.log('View recipe:', recipe._id)}
           >
             View Recipe
           </Button>
