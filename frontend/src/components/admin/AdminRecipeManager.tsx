@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Eye, Check, X, Clock, Users, ChefHat } from 'lucide-react';
 import { RecipePreview } from './RecipePreview';
 
-const API_URL = 'http://localhost:5000'; // Matches backend port
+const API_URL = 'http://localhost:3000'; // Matches backend port
 
 export const AdminRecipeManager = () => {
   const [recipes, setRecipes] = useState([]);

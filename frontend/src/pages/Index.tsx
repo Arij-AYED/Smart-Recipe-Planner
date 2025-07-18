@@ -10,7 +10,7 @@ import MealPlannerCalendar from '@/components/MealPlannerCalendar';
 import IngredientSearch from '@/components/IngredientSearch';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000';
+const API_URL = 'http://localhost:3000';
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
