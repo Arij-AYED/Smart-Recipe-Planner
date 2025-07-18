@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import axios from 'axios';
+import axios from 'axios'; //to send data to the backend
 
 const Signup = () => {
   const [formData, setFormData] = useState({
