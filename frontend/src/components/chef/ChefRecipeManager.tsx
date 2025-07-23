@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, Clock, Users, ChefHat } from 'lucide-react';
+import { Plus, Edit, Trash2, Clock, Users, ChefHat, Eye, Flame } from 'lucide-react';
 
 const API_URL = 'http://localhost:3000'; // Matches backend port
 
@@ -176,6 +176,14 @@ export const ChefRecipeManager = () => {
     }
   };
 
+  // Function to truncate description to 3 lines
+  const truncateDescription = (description) => {
+    if (!description) return '';
+    const lines = description.split('\n');
+    const truncated = lines.slice(0, 3).join('\n');
+    return lines.length > 3 ? `${truncated}...` : truncated;
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -295,7 +303,7 @@ export const ChefRecipeManager = () => {
                 {formData.tags.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2">
                     {formData.tags.map((tag) => (
-                      <Badge key={tag} className="bg-blue-100 text-blue-800">
+                      <Badge key={tag} className="bg-slate-200 text-slate-800">
                         {tag} <button onClick={() => removeTag(tag)} className="ml-1 text-red-600">×</button>
                       </Badge>
                     ))}
@@ -356,13 +364,13 @@ export const ChefRecipeManager = () => {
             </div>
             <CardHeader>
               <CardTitle className="text-lg">{recipe.title}</CardTitle>
-              <CardDescription>{recipe.description}</CardDescription>
+              <CardDescription>{truncateDescription(recipe.description)}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
                 <div className="flex items-center gap-1">
                   <Clock className="h-4 w-4" />
-                  {recipe.cookTime}
+                  {recipe.cookTime} min
                 </div>
                 <div className="flex items-center gap-1">
                   <Users className="h-4 w-4" />
@@ -373,28 +381,31 @@ export const ChefRecipeManager = () => {
                   {recipe.difficulty}
                 </div>
                 {recipe.calories > 0 && (
-                  <div className="flex items-center gap-1">
-                    <span>Calories: {recipe.calories}</span>
+                  <div className="flex items-center gap-1 ml-20 font-semibold text-orange-600">
+                    <Flame className='h-4 w-4'/>{recipe.calories} cal
                   </div>
                 )}
               </div>
               <div className="flex flex-wrap gap-1 mb-2">
                 {recipe.tags && recipe.tags.map((tag) => (
-                  <Badge key={tag} className="bg-blue-100 text-blue-800">{tag}</Badge>
+                  <Badge key={tag} className="bg-slate-200 text-slate-800">{tag}</Badge>
                 ))}
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => handleEditRecipe(recipe)}>
-                  <Edit className="h-4 w-4 mr-1" />
+                <Button variant="outline" className='text-black-600 hover:text-grey-700  size-1/3 hover:-translate-y-0.5 transition-all duration-500 cursor-pointer' onClick={() => handleEditRecipe(recipe)}>
+                  <Eye className="h-4 w-4 mr-1 transition-transform duration-500 " />
+                  View
+                </Button>
+                <Button variant="outline" className='text-blue-600 hover:text-blue-700 size-1/3 hover:-translate-y-0.5 transition-all duration-500 cursor-pointer' onClick={() => handleEditRecipe(recipe)}>
+                  <Edit className="h-4 w-4 mr-1 transition-transform duration-500 " />
                   Edit
                 </Button>
                 <Button 
                   variant="outline" 
-                  size="sm" 
                   onClick={() => handleDeleteRecipe(recipe._id)}
-                  className="text-red-600 hover:text-red-700"
+                  className="text-red-600 hover:text-red-700 size-1/3 hover:-translate-y-0.5 transition-all duration-500 cursor-pointer"
                 >
-                  <Trash2 className="h-4 w-4 mr-1" />
+                  <Trash2 className="h-4 w-4 mr-1 transition-transform duration-500" />
                   Delete
                 </Button>
               </div>

@@ -2,6 +2,7 @@ import { Clock, Users, Heart, Bookmark } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 import { useState } from 'react';
 
 const API_URL = 'http://localhost:3000';
@@ -81,7 +82,7 @@ const RecipeCard = ({ recipe }: RecipeCardProps) => {
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-1">
               <Clock className="w-4 h-4" />
-              <span>{recipe.cookTime}</span>
+              <span>{recipe.cookTime} min</span>
             </div>
             <div className="flex items-center space-x-1">
               <Users className="w-4 h-4" />
@@ -94,25 +95,26 @@ const RecipeCard = ({ recipe }: RecipeCardProps) => {
         </div>
 
         <div className="flex flex-wrap gap-1">
-          {recipe.tags.slice(0, 2).map((tag, index) => (
+          {recipe.tags.slice(0, 3).map((tag, index) => (
             <Badge key={index} variant="secondary" className="text-xs">
               {tag}
             </Badge>
           ))}
-          {recipe.tags.length > 2 && (
+          {recipe.tags.length > 3 && (
             <Badge variant="secondary" className="text-xs">
-              +{recipe.tags.length - 2}
+              +{recipe.tags.length - 3}
             </Badge>
           )}
         </div>
 
         <div className="pt-2">
-          <Button 
-            className="w-full bg-gradient-to-r from-orange-500 to-green-500 hover:from-orange-600 hover:to-green-600 text-white"
-            onClick={() => console.log('View recipe:', recipe._id)}
-          >
-            View Recipe
-          </Button>
+          <Link to={`/recipe/${recipe._id}`}>
+            <Button 
+              className="w-full bg-gradient-to-r from-orange-500 to-green-500 hover:from-orange-600 hover:to-green-600 text-white"
+            >
+              View Recipe
+            </Button>
+          </Link>
         </div>
       </CardContent>
     </Card>
