@@ -4,7 +4,6 @@ const Recipe = require('../models/Recipe');
 const multer = require('multer');
 const bodyParser = require('body-parser');
 const authenticate = require('../middleware/auth');
-const mega = require('mega');
 const fs = require('fs').promises;
 const path = require('path');
 const mongoose = require('mongoose');
