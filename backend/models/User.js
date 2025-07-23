@@ -5,10 +5,11 @@ const userSchema =new mongoose.Schema({ //how the user should look in the db
     lastname:{ type:String, required:true},
     email:{type:String, required:true, unique:true},
     password:{type : String, required: true},
-    role:{ type: String, enum: ['user', 'chef'], default: 'user' },
+    role:{ type: String, enum: ['user', 'chef','admin'], default: 'user' },
     certificate: { type: String },
     isBanned:{type:Boolean,default:false},
-    isChefActive:{type:Boolean,default:false}
+    isChefActive:{type:Boolean,default:false},
+    profileImage: { type: String, default: '/uploads/default-avatar.jpg' }, //default profile image
 
 
 }, {timestamps:true});

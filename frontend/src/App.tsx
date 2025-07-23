@@ -1,6 +1,6 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
+//import { Toaster } from "@/components/ui/toaster";
+//import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -10,15 +10,15 @@ import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/AdminDashboard";
 import ChefDashboard from "./pages/ChefDashboard";
+import { Toaster as CustomToaster} from 'react-hot-toast';
 import UserProfile from "./pages/UserProfile";
 
 const queryClient = new QueryClient();
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
+      
+      <CustomToaster position="top-center"/>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
