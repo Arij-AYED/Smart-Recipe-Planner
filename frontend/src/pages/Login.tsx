@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -20,13 +21,20 @@ const Login = () => {
 
    try {
   const response = await axios.post('http://localhost:3000/api/login', { email, password });
+  localStorage.setItem("user", JSON.stringify(response.data.user));
+  localStorage.setItem("token", response.data.token);
+  window.location.href='/';
   console.log('Login response:', response.data);
   const { token } = response.data;
   localStorage.setItem('token', token);
-  alert('Login successful!');
+  console.log('Before toast');
+  toast.success('🎉 Login successful!');
+  console.log('After toast');
+
 } catch (error) {
   console.error('Login error:', error.response?.data || error.message);
-  alert(error.response?.data?.error || 'Login failed');
+  toast.error(error.response?.data?.error || 'Login failed ❌');
+
 }
 
   }
@@ -113,6 +121,7 @@ const Login = () => {
               </div>
 
               {/* Login Button */}
+              
               <Button
                 type="submit"
                 disabled={isLoading}
@@ -120,6 +129,7 @@ const Login = () => {
               >
                 {isLoading ? 'Signing in...' : 'Sign In'}
               </Button>
+              
             </form>
 
             {/* Divider */}

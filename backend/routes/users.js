@@ -37,5 +37,22 @@ router.put('/:id/ban', async (req, res) => {
   }
 });
 
+router.put('/:id/promote',async (req,res)=>{
+  try{
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      {role:'admin'},
+      {new:true}
+    )
+    if (!user){
+      return res.status(404).json({error: 'User not found'});
+    }
+    res.json({message: 'User promoted to admin successfully', user});
+  }catch (error){
+    console.error('Promotion error:', error);
+    res.status(500).json({error: 'Server error'});
+  }
+})
+
 
 module.exports = router;

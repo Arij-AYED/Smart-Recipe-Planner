@@ -40,3 +40,8 @@
 .read-the-docs {
   color: #888;
 }
+.react-hot-toast {
+  position: fixed !important;
+  z-index: 999999 !important;
+  pointer-events: auto !important;
+}

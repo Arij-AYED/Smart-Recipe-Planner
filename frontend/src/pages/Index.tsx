@@ -9,8 +9,10 @@ import RecipeCard from '@/components/RecipeCard';
 import MealPlannerCalendar from '@/components/MealPlannerCalendar';
 import IngredientSearch from '@/components/IngredientSearch';
 import axios from 'axios';
+import toast, { Toaster } from 'react-hot-toast';
 
 const API_URL = 'http://localhost:3000';
+
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -39,6 +41,15 @@ const Index = () => {
     { label: "Comfort Food", icon: "🍲", color: "bg-amber-100 text-amber-800" }
   ];
 
+  let user = null;
+try {
+  const storedUser = localStorage.getItem("user");
+  user = storedUser && storedUser !== "undefined" ? JSON.parse(storedUser) : null;
+} catch (err) {
+  console.error("Failed to parse user from localStorage:", err);
+  user = null;
+}
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-green-50">
       {/* Header */}
@@ -56,10 +67,13 @@ const Index = () => {
             
             <div className="flex items-center space-x-4">
               <nav className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+
                 {[
                   { id: 'discover', label: 'Discover', icon: Search },
                   { id: 'planner', label: 'Meal Planner', icon: Calendar },
-                  { id: 'ingredients', label: 'Ingredients', icon: Plus }
+                  { id: 'ingredients', label: 'Ingredients', icon: Plus
+
+                  }
                 ].map(({ id, label, icon: Icon }) => (
                   <button
                     key={id}
@@ -75,11 +89,20 @@ const Index = () => {
                   </button>
                 ))}
               </nav>
+              {user?.role==='admin' && 
+              <Link to="/admin">
+                <Button variant="default" className="bg-orange-400 hover:bg-orange-700 text-white font-meduim size-300">
+                  Admin Dashboard
+                </Button>
+                </Link>}
               
               <Link to="/login">
                 <Button variant="outline" className="text-orange-600 border-orange-200 hover:bg-orange-50">
-                  <User className="w-4 h-4 mr-2" />
-                  Login
+                 <img
+                    src={user?.profileImage ? `${API_URL}${user.profileImage}` : '/default-avatar.jpg'}
+                    className="w-20 h-10 object-cover rounded-full"
+                    alt="Profile"
+                  />
                 </Button>
               </Link>
             </div>

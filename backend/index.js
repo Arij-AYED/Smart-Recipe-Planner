@@ -18,7 +18,7 @@ mongoose.connect(process.env.MONGO_URI)
 .catch((err)=>console.error('MongoDB error:',err));
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
+app.use('/uploads',express.static('public/uploads'));
 //use auth routes
 app.use('/api',authRoutes);
 app.use('/api/admin', adminRoutes);
