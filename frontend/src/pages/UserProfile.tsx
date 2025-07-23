@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/
-import { User, Heart, Book, Settings, Camera, Edit3, Save, X } from 'lucide-react';components/ui/input';
+import { Input } from '@/components/ui/input';
+import { User, Heart, Book, Settings, Camera, Edit3, Save, X } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -23,7 +23,7 @@ interface UserData {
   profileImage?: string;
   bio?: string;
   location?: string;
-  favoriteRecipes?: string[];
+  
 }
 
 const UserProfile = () => {
@@ -35,13 +35,11 @@ const UserProfile = () => {
     bio: '',
     location: ''
   });
-  const [favoriteRecipes, setFavoriteRecipes] = useState([]);
   const [userRecipes, setUserRecipes] = useState([]);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchUserData();
-    fetchFavoriteRecipes();
     fetchUserRecipes();
   }, []);
 
@@ -68,17 +66,6 @@ const UserProfile = () => {
     }
   };
 
-  const fetchFavoriteRecipes = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/users/favorites`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setFavoriteRecipes(response.data);
-    } catch (error) {
-      console.error('Error fetching favorite recipes:', error);
-    }
-  };
 
   const fetchUserRecipes = async () => {
     try {
@@ -280,12 +267,8 @@ const UserProfile = () => {
         </Card>
 
         {/* Profile Tabs */}
-        <Tabs defaultValue="favorites" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="favorites" className="flex items-center space-x-2">
-              <Heart className="w-4 h-4" />
-              <span>Favorites</span>
-            </TabsTrigger>
+        <Tabs defaultValue={user.role === 'chef' ? "my-recipes" : "settings"} className="space-y-6">
+          <TabsList className={`grid w-full ${user.role === 'chef' ? 'grid-cols-2' : 'grid-cols-1'}`}>
             {user.role === 'chef' && (
               <TabsTrigger value="my-recipes" className="flex items-center space-x-2">
                 <Book className="w-4 h-4" />
@@ -297,35 +280,6 @@ const UserProfile = () => {
               <span>Settings</span>
             </TabsTrigger>
           </TabsList>
-
-          <TabsContent value="favorites" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Heart className="w-5 h-5 text-red-500" />
-                  <span>Favorite Recipes</span>
-                </CardTitle>
-                <CardDescription>
-                  Recipes you've saved and loved
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {favoriteRecipes.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {favoriteRecipes.map((recipe) => (
-                      <RecipeCard key={recipe._id} recipe={recipe} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <Heart className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500">No favorite recipes yet</p>
-                    <p className="text-sm text-gray-400">Start exploring and save recipes you love!</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           {user.role === 'chef' && (
             <TabsContent value="my-recipes" className="space-y-6">
