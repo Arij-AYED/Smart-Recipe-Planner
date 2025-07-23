@@ -12,7 +12,6 @@ import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 
-
 const API_URL = 'http://localhost:3000';
 
 interface UserData {
@@ -25,9 +24,6 @@ interface UserData {
   profileImage?: string;
   bio?: string;
   location?: string;
-
-  //favoriteRecipes?: string[];
-
 }
 
 const UserProfile = () => {
@@ -40,61 +36,65 @@ const UserProfile = () => {
     location: ''
   });
 
-  //const [favoriteRecipes, setFavoriteRecipes] = useState([]);
+  const [favoriteRecipes, setFavoriteRecipes] = useState([]);
   const [userRecipes, setUserRecipes] = useState([]);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchUserData();
-
-   // fetchFavoriteRecipes();
-   fetchUserRecipes();
-
+    fetchFavoriteRecipes();
+    fetchUserRecipes();
   }, []);
+
   useEffect(() => {
-  const timeout = setTimeout(() => {
-    if (!user) {
+    const timeout = setTimeout(() => {
+      if (!user) {
+        toast({
+          title: "Timeout",
+          description: "Unable to load profile after several seconds.",
+          variant: "destructive"
+        });
+      }
+    }, 8000);
+    return () => clearTimeout(timeout);
+  }, [user]);
+
+  const fetchUserData = async () => {
+    const token = localStorage.getItem('token');
+
+    if (!token) {
       toast({
-        title: "Timeout",
-        description: "Unable to load profile after several seconds.",
+        title: "Not Logged In",
+        description: "Please log in to view your profile",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const response = await axios.get(`${API_URL}/auth/profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUser(response.data);
+
+      // Initialize edit form fields with fetched user data
+      setEditForm({
+        firstname: response.data.firstname || '',
+        lastname: response.data.lastname || '',
+        bio: response.data.bio || '',
+        location: response.data.location || ''
+      });
+    } catch (error: any) {
+      console.error("Error fetching user data:", error.response?.data || error.message);
+      toast({
+        title: "Error",
+        description: "Failed to load profile. Please try again.",
         variant: "destructive"
       });
     }
-  }, 8000);
+  };
 
-  return () => clearTimeout(timeout);
-}, [user]);
-
-
-
-  const fetchUserData = async () => {
-  const token = localStorage.getItem('token');
-
-  if (!token) {
-    toast({
-      title: "Not Logged In",
-      description: "Please log in to view your profile",
-      variant: "destructive"
-    });
-    return;
-  }
-
-  try {
-    const response = await axios.get(`${API_URL}/auth/profile`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    setUser(response.data);
-  } catch (error: any) {
-    console.error("Error fetching user data:", error.response?.data || error.message);
-    toast({
-      title: "Error",
-      description: "Failed to load profile. Please try again.",
-      variant: "destructive"
-    });
-  }
-};
-
-  /*const fetchFavoriteRecipes = async () => {
+  const fetchFavoriteRecipes = async () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(`${API_URL}/users/favorites`, {
@@ -104,8 +104,7 @@ const UserProfile = () => {
     } catch (error) {
       console.error('Error fetching favorite recipes:', error);
     }
-  };*/
-
+  };
 
   const fetchUserRecipes = async () => {
     try {
@@ -125,7 +124,7 @@ const UserProfile = () => {
       await axios.put(`${API_URL}/auth/profile`, editForm, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       setUser(prev => prev ? { ...prev, ...editForm } : null);
       setIsEditing(false);
       toast({
@@ -157,7 +156,7 @@ const UserProfile = () => {
           'Content-Type': 'multipart/form-data'
         }
       });
-      
+
       setUser(prev => prev ? { ...prev, profileImage: response.data.profileImage } : null);
       toast({
         title: "Success",
@@ -238,7 +237,7 @@ const UserProfile = () => {
                   </label>
                 )}
               </div>
-              
+
               <div className="flex-1 text-center md:text-left">
                 {isEditing ? (
                   <div className="space-y-4">
@@ -306,16 +305,13 @@ const UserProfile = () => {
           </CardContent>
         </Card>
 
-        {/* Profile Tabs */}
-
-         {/*<Tabs defaultValue="favorites" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+        {/* Tabs */}
+        <Tabs defaultValue={user.role === 'chef' ? "my-recipes" : "favorites"} className="space-y-6">
+          <TabsList className={`grid w-full ${user.role === 'chef' ? 'grid-cols-3' : 'grid-cols-1'}`}>
             <TabsTrigger value="favorites" className="flex items-center space-x-2">
               <Heart className="w-4 h-4" />
               <span>Favorites</span>
-            </TabsTrigger> */}
-          <Tabs defaultValue={user.role === 'chef' ? "my-recipes" : "settings"} className="space-y-6">
-          <TabsList className="grid w-full ${user.role === 'chef' ? 'grid-cols-2' : 'grid-cols-1'}">
+            </TabsTrigger>
 
             {user.role === 'chef' && (
               <TabsTrigger value="my-recipes" className="flex items-center space-x-2">
@@ -323,14 +319,14 @@ const UserProfile = () => {
                 <span>My Recipes</span>
               </TabsTrigger>
             )}
+
             <TabsTrigger value="settings" className="flex items-center space-x-2">
               <Settings className="w-4 h-4" />
               <span>Settings</span>
             </TabsTrigger>
           </TabsList>
 
-
-          {/*<TabsContent value="favorites" className="space-y-6">
+          <TabsContent value="favorites" className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
@@ -357,7 +353,8 @@ const UserProfile = () => {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>*/}
+          </TabsContent>
+
           {user.role === 'chef' && (
             <TabsContent value="my-recipes" className="space-y-6">
               <Card>
@@ -371,7 +368,7 @@ const UserProfile = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {/*{userRecipes.length > 0 ? (
+                  {userRecipes.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {userRecipes.map((recipe) => (
                         <RecipeCard key={recipe._id} recipe={recipe} />
@@ -383,7 +380,7 @@ const UserProfile = () => {
                       <p className="text-gray-500">No recipes created yet</p>
                       <p className="text-sm text-gray-400">Start sharing your culinary creations!</p>
                     </div>
-                  )}*/}
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -435,10 +432,11 @@ const UserProfile = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
         <div className="mt-6 text-center">
-            <Link to="/" className="text-sm text-gray-600 hover:text-gray-800">
-                    ← Back to Home
-            </Link>
+          <Link to="/" className="text-sm text-gray-600 hover:text-gray-800">
+            ← Back to Home
+          </Link>
         </div>
       </main>
     </div>
