@@ -3,6 +3,10 @@ const router = express.Router();
 const Recipe = require('../models/Recipe');
 const multer = require('multer');
 const bodyParser = require('body-parser');
+const mega = require('mega');
+const fs = require('fs').promises;
+const path = require('path');
+const mongoose = require('mongoose');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -19,12 +23,15 @@ const upload = multer({ storage: storage });
 router.use(bodyParser.json());
 router.use(bodyParser.urlencoded({ extended: true }));
 
+
 // Get all approved recipes
 router.get('/', async (req, res) => {
   try {
     const recipes = await Recipe.find({ status: 'Approved' });
+    console.log('Fetched approved recipes:', recipes.length);
     res.json(recipes);
   } catch (err) {
+    console.error('Error fetching approved recipes:', err.message);
     res.status(500).json({ message: err.message });
   }
 });
@@ -34,21 +41,27 @@ router.get('/tags', async (req, res) => {
   try {
     const recipes = await Recipe.find();
     const allTags = [...new Set(recipes.flatMap(recipe => recipe.tags || []))];
+    console.log('Fetched tags:', allTags);
     res.json(allTags);
   } catch (err) {
+    console.error('Error fetching tags:', err.message);
     res.status(500).json({ message: err.message });
   }
 });
 
-// Get all recipes (for admin dashboard)
+// Get all recipes (for admin dashboard and ChefRecipeManager)
 router.get('/all', async (req, res) => {
   try {
     const recipes = await Recipe.find();
+    console.log('Fetched all recipes:', recipes.length);
     res.json(recipes);
   } catch (err) {
+    console.error('Error fetching all recipes:', err.message);
     res.status(500).json({ message: err.message });
   }
 });
+
+
 
 // Create a new recipe with image upload
 router.post('/', upload.single('image'), async (req, res) => {
@@ -76,6 +89,7 @@ router.post('/', upload.single('image'), async (req, res) => {
     res.status(400).json({ message: err.message });
   }
 });
+
 
 // Update a recipe with image upload or status change
 router.put('/:id', upload.single('image'), async (req, res) => {
@@ -118,5 +132,24 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
-
+// Get a single recipe by ID (must be after specific routes)
+router.get('/:id', async (req, res) => {
+  try {
+    console.log(`Fetching recipe with ID: ${req.params.id}`);
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      console.log(`Invalid ObjectID: ${req.params.id}`);
+      return res.status(400).json({ message: 'Invalid recipe ID format' });
+    }
+    const recipe = await Recipe.findById(req.params.id);
+    if (!recipe) {
+      console.log(`Recipe not found for ID: ${req.params.id}`);
+      return res.status(404).json({ message: 'Recipe not found' });
+    }
+    console.log('Recipe fetched:', recipe);
+    res.json(recipe);
+  } catch (err) {
+    console.error('Error fetching recipe:', err.message);
+    res.status(500).json({ message: err.message });
+  }
+});
 module.exports = router;
