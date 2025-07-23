@@ -4,8 +4,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
-
+import toast from 'react-hot-toast';
 const API_URL = 'http://localhost:3000';
+import axios from 'axios';
 
 interface Recipe {
   _id: string;
@@ -21,10 +22,13 @@ interface Recipe {
 
 interface RecipeCardProps {
   recipe: Recipe;
+  user?:any;
 }
 
-const RecipeCard = ({ recipe }: RecipeCardProps) => {
-  const [isLiked, setIsLiked] = useState(false);
+const RecipeCard = ({ recipe,user }: RecipeCardProps) => {
+  const [isLiked, setIsLiked] = useState<boolean>(
+    user?.favorites?.includes(recipe._id) || false
+  );
   const [isBookmarked, setIsBookmarked] = useState(false);
 
   const getDifficultyColor = (difficulty: string) => {
@@ -37,6 +41,31 @@ const RecipeCard = ({ recipe }: RecipeCardProps) => {
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+  const toggleFavorite=async()=>{
+    const token = localStorage.getItem('token');
+    if(!token){
+      toast.error('You must be logged in to favorite recipes');
+      return;
+    }
+    try{
+      if(isLiked){
+        await axios.delete(`${API_URL}/users/favorites/${recipe._id}`, {
+          headers :{ Authorization: `Bearer ${token}` }
+      });
+      setIsLiked(false);
+      toast.success('Recipe removed from favorites');
+      }else{
+        await axios.post(`${API_URL}/users/favorites/${recipe._id}`, {}, {
+          headers :{ Authorization: `Bearer ${token}` },
+      });
+        setIsLiked(true);
+        toast.success('Recipe added to favorites');
+      }
+    }catch(error){
+      console.error('Favorite toggle error:', error);
+      toast.error('Failed to update favorites');
     }
   };
 
@@ -53,18 +82,11 @@ const RecipeCard = ({ recipe }: RecipeCardProps) => {
             size="sm"
             variant="secondary"
             className={`w-8 h-8 rounded-full p-0 ${isLiked ? 'bg-red-500 hover:bg-red-600' : 'bg-white/80 hover:bg-white'}`}
-            onClick={() => setIsLiked(!isLiked)}
+            onClick={toggleFavorite}
           >
             <Heart className={`w-4 h-4 ${isLiked ? 'text-white fill-current' : 'text-gray-600'}`} />
           </Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            className={`w-8 h-8 rounded-full p-0 ${isBookmarked ? 'bg-orange-500 hover:bg-orange-600' : 'bg-white/80 hover:bg-white'}`}
-            onClick={() => setIsBookmarked(!isBookmarked)}
-          >
-            <Bookmark className={`w-4 h-4 ${isBookmarked ? 'text-white fill-current' : 'text-gray-600'}`} />
-          </Button>
+          
         </div>
         <div className="absolute bottom-3 left-3">
           <Badge className={getDifficultyColor(recipe.difficulty)}>
