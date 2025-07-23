@@ -76,12 +76,21 @@ const Index = () => {
                 ))}
               </nav>
               
-              <Link to="/login">
-                <Button variant="outline" className="text-orange-600 border-orange-200 hover:bg-orange-50">
-                  <User className="w-4 h-4 mr-2" />
-                  Login
-                </Button>
-              </Link>
+              {localStorage.getItem('token') ? (
+                <Link to="/profile">
+                  <Button variant="outline" className="text-orange-600 border-orange-200 hover:bg-orange-50">
+                    <User className="w-4 h-4 mr-2" />
+                    Profile
+                  </Button>
+                </Link>
+              ) : (
+                <Link to="/login">
+                  <Button variant="outline" className="text-orange-600 border-orange-200 hover:bg-orange-50">
+                    <User className="w-4 h-4 mr-2" />
+                    Login
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>
