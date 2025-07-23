@@ -142,6 +142,7 @@ router.get('/my-recipes', authenticate, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch user recipes' });
+  }});
 
 // Get a single recipe by ID (must be after specific routes)
 router.get('/:id', async (req, res) => {
