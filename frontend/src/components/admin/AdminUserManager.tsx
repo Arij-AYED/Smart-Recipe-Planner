@@ -178,9 +178,10 @@ const handlePromoteToAdmin = async (userId: string ) => {
               <TableRow>
                 <TableHead>User</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Role</TableHead>
                 <TableHead>Joined</TableHead>
                 <TableHead>Recipes</TableHead>
-                <TableHead>Last Login</TableHead>
+                
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -196,10 +197,12 @@ const handlePromoteToAdmin = async (userId: string ) => {
                       </div>
                     </div>
                   </TableCell>
+
                   <TableCell>{getStatusBadge(user.status)}</TableCell>
+                  <TableCell className="capitalize">{user.role}</TableCell>
                   <TableCell>{user.joinedAt}</TableCell>
                   <TableCell>{user.recipesCount}</TableCell>
-                  <TableCell>{user.lastLogin}</TableCell>
+                  
                   <TableCell>
                     <div className="flex gap-2">
                       {user.role==='chef' && user.status!== 'active' && (

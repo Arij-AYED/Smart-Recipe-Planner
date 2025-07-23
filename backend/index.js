@@ -24,7 +24,7 @@ app.use('/api',authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/users', userRoutes); 
 app.use('/recipes', recipeRoutes);
-
+app.use('/auth', authRoutes);
 
 const PORT = process.env.PORT ;
 app.listen(PORT, () => {

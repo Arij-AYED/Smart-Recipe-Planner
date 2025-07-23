@@ -7,6 +7,9 @@ const multer=require('multer'); //file uploads
 const path=require('path'); //handle file path
 const fs = require('fs'); //create folders if needed
 const upload = require('../middleware/uploads');
+const authenticate=require('../middleware/auth'); //authentication middleware
+
+
 //configure file uploads
 const storage=multer.diskStorage({
     destination:function(req,file,cb){
@@ -18,6 +21,22 @@ const storage=multer.diskStorage({
         const uniqueName=`${Date.now()}-${file.originalname}`;
         cb(null,uniqueName);
     }
+})
+
+router.get('/profile',authenticate,async(req,res) =>{
+  try{
+    const userId = req.user.id;
+    const user = await User.findById(userId).select('-password');
+
+    if (!user){
+      return res.status(404).json({error:'User not found'});
+    }
+    res.json(user);
+
+  }catch(err){
+    console.error(' Error fetching user profile',err);
+    res.status(500).json({error:'Internal server error'});
+  }
 })
 
 /*const upload=multer({
@@ -34,8 +53,9 @@ router.post('/register',upload.fields([
     {name:'profileImage',maxCount:1},
     {name:'certificate',maxCount:1}
 ]),async(req,res)=>{
+
     try{
-        const {firstname,lastname,email,password}=req.body;
+        const {firstname,lastname,email,password,role}=req.body;
         const profileImageFile = req.files['profileImage'] ? req.files['profileImage'][0] : null;
         const certificateFile = req.files['certificate'] ? req.files['certificate'][0] : null;
         //const imagePath=req.file?`/uploads/${req.file.filename}`:'/uploads/default-avatar.jpg';
@@ -45,7 +65,7 @@ router.post('/register',upload.fields([
         const imagePath = profileImageFile ? `/uploads/${profileImageFile.filename}` : '/uploads/default-avatar.jpg';
         const hashedPassword = await bcrypt.hash(password,10);
 
-        const role = 'user'; 
+        const validRoles = ['admin', 'chef', 'user'];
 
         const userCount= await User.countDocuments();
         const assignedRole=userCount===0?'admin' : role;

@@ -3,6 +3,7 @@ const router = express.Router();
 const Recipe = require('../models/Recipe');
 const multer = require('multer');
 const bodyParser = require('body-parser');
+const authenticate = require('../middleware/auth');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -118,5 +119,13 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
-
+router.get('/my-recipes', authenticate, async (req, res) => {
+  try {
+    const myRecipes = await Recipe.find({ createdBy: req.user._id }); // assuming `createdBy` field exists
+    res.json(myRecipes);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch user recipes' });
+  }
+});
 module.exports = router;
