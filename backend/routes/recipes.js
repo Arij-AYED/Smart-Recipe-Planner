@@ -3,10 +3,12 @@ const router = express.Router();
 const Recipe = require('../models/Recipe');
 const multer = require('multer');
 const bodyParser = require('body-parser');
+const authenticate = require('../middleware/auth');
 const mega = require('mega');
 const fs = require('fs').promises;
 const path = require('path');
 const mongoose = require('mongoose');
+
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -132,6 +134,15 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+
+router.get('/my-recipes', authenticate, async (req, res) => {
+  try {
+    const myRecipes = await Recipe.find({ createdBy: req.user._id }); // assuming `createdBy` field exists
+    res.json(myRecipes);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch user recipes' });
+
 // Get a single recipe by ID (must be after specific routes)
 router.get('/:id', async (req, res) => {
   try {
@@ -150,6 +161,7 @@ router.get('/:id', async (req, res) => {
   } catch (err) {
     console.error('Error fetching recipe:', err.message);
     res.status(500).json({ message: err.message });
+
   }
 });
 module.exports = router;

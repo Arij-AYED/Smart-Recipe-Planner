@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Search, Calendar, ChefHat, Clock, Users, Heart, Plus, Filter, User } from 'lucide-react';
+import { Search, Calendar, ChefHat, Clock, Users, Heart, Plus, Filter, User, LogOut, Settings } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import RecipeCard from '@/components/RecipeCard';
 import MealPlannerCalendar from '@/components/MealPlannerCalendar';
 import IngredientSearch from '@/components/IngredientSearch';
@@ -12,7 +13,6 @@ import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 
 const API_URL = 'http://localhost:3000';
-
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -42,13 +42,24 @@ const Index = () => {
   ];
 
   let user = null;
-try {
-  const storedUser = localStorage.getItem("user");
-  user = storedUser && storedUser !== "undefined" ? JSON.parse(storedUser) : null;
-} catch (err) {
-  console.error("Failed to parse user from localStorage:", err);
-  user = null;
-}
+  try {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser && storedUser !== "undefined") {
+      user = JSON.parse(storedUser);
+      console.log('Parsed user role:', user?.role); // Debug log to verify role
+    } else {
+      console.warn('No user data found in localStorage');
+    }
+  } catch (err) {
+    console.error("Failed to parse user from localStorage:", err);
+    user = null;
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/login';
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-green-50">
@@ -60,20 +71,14 @@ try {
               <div className="w-10 h-10 bg-gradient-to-r from-orange-400 to-green-400 rounded-full flex items-center justify-center">
                 <ChefHat className="w-6 h-6 text-white" />
               </div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-green-600 bg-clip-text text-transparent">
-                Smart Recipe Planner
-              </h1>
             </div>
             
             <div className="flex items-center space-x-4">
               <nav className="flex space-x-1 bg-gray-100 rounded-lg p-1">
-
                 {[
                   { id: 'discover', label: 'Discover', icon: Search },
                   { id: 'planner', label: 'Meal Planner', icon: Calendar },
-                  { id: 'ingredients', label: 'Ingredients', icon: Plus
-
-                  }
+                  { id: 'ingredients', label: 'Ingredients', icon: Plus }
                 ].map(({ id, label, icon: Icon }) => (
                   <button
                     key={id}
@@ -89,24 +94,55 @@ try {
                   </button>
                 ))}
               </nav>
-              {user?.role==='admin' && 
-              <Link to="/admin">
-                <Button variant="default" className="bg-orange-400 hover:bg-orange-700 text-white font-meduim size-300">
-                  Admin Dashboard
-                </Button>
-                </Link>}
-              
-              <Link to="/login">
-                <Button variant="outline" className="text-orange-600 border-orange-200 hover:bg-orange-50">
-                 <img
-                    src={user?.profileImage ? `${API_URL}${user.profileImage}` : '/default-avatar.jpg'}
-                    className="w-20 h-10 object-cover rounded-full"
-                    alt="Profile"
-                  />
-                </Button>
-              </Link>
-
-              
+              {localStorage.getItem('token') ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="text-orange-600 border-orange-200 hover:bg-orange-50">
+                      <img
+                        src={user?.profileImage ? `${API_URL}${user.profileImage}` : '/default-avatar.jpg'}
+                        className="w-8 h-8 object-cover rounded-full mr-2"
+                        alt="Profile"
+                      />
+                      <User className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem asChild>
+                      <Link to="/profile" className="flex items-center w-full">
+                        <User className="w-4 h-4 mr-2" />
+                        Profile
+                      </Link>
+                    </DropdownMenuItem>
+                    {user?.role === 'admin' && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin" className="flex items-center w-full">
+                          <Settings className="w-4 h-4 mr-2" />
+                          Admin Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    {user?.role === 'chef' && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/chef" className="flex items-center w-full">
+                          <ChefHat className="w-4 h-4 mr-2" />
+                          Chef Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem onClick={handleLogout} className="flex items-center">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link to="/login">
+                  <Button variant="outline" className="text-orange-600 border-orange-200 hover:bg-orange-50">
+                    <User className="w-4 h-4 mr-2" />
+                    Login
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>

@@ -9,7 +9,8 @@ const userSchema =new mongoose.Schema({ //how the user should look in the db
     certificate: { type: String },
     isBanned:{type:Boolean,default:false},
     isChefActive:{type:Boolean,default:false},
-    profileImage: { type: String, default: '/uploads/default-avatar.jpg' }, //default profile image
+    profileImage: { type: String, default: '/uploads/default-avatar.jpg' },
+    favorites:[{type:mongoose.Schema.Types.ObjectId,ref:'Recipe'}] //default profile image
 
 
 }, {timestamps:true});

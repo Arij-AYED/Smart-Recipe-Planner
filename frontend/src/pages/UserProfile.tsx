@@ -10,6 +10,8 @@ import { Label } from '@/components/ui/label';
 import RecipeCard from '@/components/RecipeCard';
 import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
+
 
 const API_URL = 'http://localhost:3000';
 
@@ -23,7 +25,9 @@ interface UserData {
   profileImage?: string;
   bio?: string;
   location?: string;
-  
+
+  //favoriteRecipes?: string[];
+
 }
 
 const UserProfile = () => {
@@ -35,36 +39,72 @@ const UserProfile = () => {
     bio: '',
     location: ''
   });
+
+  //const [favoriteRecipes, setFavoriteRecipes] = useState([]);
   const [userRecipes, setUserRecipes] = useState([]);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchUserData();
-    fetchUserRecipes();
-  }, []);
 
-  const fetchUserData = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/auth/profile`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setUser(response.data);
-      setEditForm({
-        firstname: response.data.firstname,
-        lastname: response.data.lastname,
-        bio: response.data.bio || '',
-        location: response.data.location || ''
-      });
-    } catch (error) {
-      console.error('Error fetching user data:', error);
+   // fetchFavoriteRecipes();
+   fetchUserRecipes();
+
+  }, []);
+  useEffect(() => {
+  const timeout = setTimeout(() => {
+    if (!user) {
       toast({
-        title: "Error",
-        description: "Failed to load profile data",
+        title: "Timeout",
+        description: "Unable to load profile after several seconds.",
         variant: "destructive"
       });
     }
-  };
+  }, 8000);
+
+  return () => clearTimeout(timeout);
+}, [user]);
+
+
+
+  const fetchUserData = async () => {
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    toast({
+      title: "Not Logged In",
+      description: "Please log in to view your profile",
+      variant: "destructive"
+    });
+    return;
+  }
+
+  try {
+    const response = await axios.get(`${API_URL}/auth/profile`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    setUser(response.data);
+  } catch (error: any) {
+    console.error("Error fetching user data:", error.response?.data || error.message);
+    toast({
+      title: "Error",
+      description: "Failed to load profile. Please try again.",
+      variant: "destructive"
+    });
+  }
+};
+
+  /*const fetchFavoriteRecipes = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/users/favorites`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setFavoriteRecipes(response.data);
+    } catch (error) {
+      console.error('Error fetching favorite recipes:', error);
+    }
+  };*/
 
 
   const fetchUserRecipes = async () => {
@@ -267,8 +307,16 @@ const UserProfile = () => {
         </Card>
 
         {/* Profile Tabs */}
-        <Tabs defaultValue={user.role === 'chef' ? "my-recipes" : "settings"} className="space-y-6">
-          <TabsList className={`grid w-full ${user.role === 'chef' ? 'grid-cols-2' : 'grid-cols-1'}`}>
+
+         {/*<Tabs defaultValue="favorites" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="favorites" className="flex items-center space-x-2">
+              <Heart className="w-4 h-4" />
+              <span>Favorites</span>
+            </TabsTrigger> */}
+          <Tabs defaultValue={user.role === 'chef' ? "my-recipes" : "settings"} className="space-y-6">
+          <TabsList className="grid w-full ${user.role === 'chef' ? 'grid-cols-2' : 'grid-cols-1'}">
+
             {user.role === 'chef' && (
               <TabsTrigger value="my-recipes" className="flex items-center space-x-2">
                 <Book className="w-4 h-4" />
@@ -281,6 +329,35 @@ const UserProfile = () => {
             </TabsTrigger>
           </TabsList>
 
+
+          {/*<TabsContent value="favorites" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Heart className="w-5 h-5 text-red-500" />
+                  <span>Favorite Recipes</span>
+                </CardTitle>
+                <CardDescription>
+                  Recipes you've saved and loved
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {favoriteRecipes.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {favoriteRecipes.map((recipe) => (
+                      <RecipeCard key={recipe._id} recipe={recipe} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Heart className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500">No favorite recipes yet</p>
+                    <p className="text-sm text-gray-400">Start exploring and save recipes you love!</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>*/}
           {user.role === 'chef' && (
             <TabsContent value="my-recipes" className="space-y-6">
               <Card>
@@ -294,7 +371,7 @@ const UserProfile = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {userRecipes.length > 0 ? (
+                  {/*{userRecipes.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {userRecipes.map((recipe) => (
                         <RecipeCard key={recipe._id} recipe={recipe} />
@@ -306,7 +383,7 @@ const UserProfile = () => {
                       <p className="text-gray-500">No recipes created yet</p>
                       <p className="text-sm text-gray-400">Start sharing your culinary creations!</p>
                     </div>
-                  )}
+                  )}*/}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -358,6 +435,11 @@ const UserProfile = () => {
             </Card>
           </TabsContent>
         </Tabs>
+        <div className="mt-6 text-center">
+            <Link to="/" className="text-sm text-gray-600 hover:text-gray-800">
+                    ← Back to Home
+            </Link>
+        </div>
       </main>
     </div>
   );
