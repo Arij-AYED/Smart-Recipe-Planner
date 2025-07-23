@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChefHat, Mail, Lock, Eye, EyeOff, User, Upload, FileText } from 'lucide-react';
+import { Image,ChefHat, Mail, Lock, Eye, EyeOff, User, Upload, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import axios from 'axios'; //to send data to the backend
+import toast from 'react-hot-toast';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -15,7 +16,7 @@ const Signup = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'user'
+    profileImage:null
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -28,13 +29,13 @@ const Signup = () => {
     setIsLoading(true);
 
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match');
+      toast.error('Passwords do not match');
       setIsLoading(false);
       return;
     }
 
     if (formData.role === 'chef' && !certificateFile) {
-      alert('Please upload a chef certificate');
+      toast.error('Please upload a chef certificate');
       setIsLoading(false);
       return;
     }
@@ -48,6 +49,9 @@ const Signup = () => {
     if (certificateFile) {
       form.append('certificate', certificateFile);
     }
+    if(formData.profileImage){
+      form.append('profileImage',formData.profileImage);
+    }
 
     try {
       const response = await axios.post('http://localhost:3000/api/register', form, {
@@ -56,11 +60,11 @@ const Signup = () => {
         }
       });
       console.log('Signup response:', response.data);
-      alert('Signup successful! Please log in.');
+      toast.success('🎉Signup successful! Please log in.');
       navigate('/login');
     } catch (error) {
       console.error('Signup error:', error.response?.data || error.message);
-      alert(error.response?.data?.error || 'Signup failed');
+     toast.error(error.response?.data?.error || 'Signup failed');
     } finally {
       setIsLoading(false);
     }
@@ -75,9 +79,18 @@ const Signup = () => {
     if (file && file.type === 'application/pdf') {
       setCertificateFile(file);
     } else {
-      alert('Please upload a PDF file only');
+      toast.error('Please upload a PDF file only');
     }
   };
+  const handleProfileImageUpload=(e:React.ChangeEvent<HTMLInputElement>)=>{
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith('image/')){
+      setFormData(prev=>({...prev,profileImage:file}));
+
+    }else{
+      toast.error('Please upload a valid image');
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-green-50 flex items-center justify-center p-4">
@@ -101,6 +114,32 @@ const Signup = () => {
           
           <CardContent>
             <form onSubmit={handleSignup} className="space-y-4">
+              <div className="space-y-2">
+        <Label htmlFor="profileImage" className="text-sm font-medium text-gray-700">
+          Profile Image
+        </Label>
+        <div className="relative">
+          <input
+            id="profileImage"
+            type="file"
+            accept="image/*"
+            onChange={handleProfileImageUpload}
+            className="hidden"
+          />
+          <Label
+            htmlFor="profileImage"
+            className="flex items-center gap-3 p-3 border border-gray-200 rounded-md cursor-pointer hover:bg-gray-50"
+          >
+            <Image className="h-4 w-4 text-gray-400" />
+            <span className="text-sm text-gray-600">
+              {formData.profileImage ? formData.profileImage.name : 'Upload your profile image'}
+            </span>
+          </Label>
+        </div>
+        <p className="text-xs text-gray-500">
+          JPG, PNG, or GIF. Max size 5MB.
+        </p>
+      </div>
               <div className="space-y-3">
                 <Label className="text-sm font-medium text-gray-700">
                   I want to join as:

@@ -77,6 +77,30 @@ const handleUserStatusChange = async (userId: string, newStatus: User['status'],
     alert('Failed to update user status');
   }
 };
+
+const handlePromoteToAdmin = async (userId: string ) => {
+  try {
+    const res = await axios.put(
+      `http://localhost:3000/api/users/${userId}/promote`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      }
+    );
+    const promotedUser = users.find(u => u.id === userId);
+    if (promotedUser) {
+      const updatedUser = { ...promotedUser, role: 'admin' };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
+    alert(res.data.message || 'User promoted to admin successfully');
+    fetchUsers();
+  } catch (err) {
+    console.error('Failed to promote user:', err);
+    alert('Failed to promote user');
+  }
+};
   const getStatusBadge = (status: User['status']) => {
     switch (status) {
       case 'active':
@@ -197,6 +221,16 @@ const handleUserStatusChange = async (userId: string, newStatus: User['status'],
                         >
                           Ban
                         </Button>
+                      )}
+                      {user.role !== 'admin' && (
+                        <Button
+                          variant="outline" 
+                          size="sm"
+                          className="text-blue-600 hover:bg-blue-50"
+                          onClick={() => handlePromoteToAdmin(user.id)}
+                          >
+                            Promote
+                          </Button>
                       )}
                     </div>
                   </TableCell>
