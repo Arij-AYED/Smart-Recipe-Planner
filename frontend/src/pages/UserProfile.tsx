@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { User, Heart, Book, Settings, Camera, Edit3, Save, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/
+import { User, Heart, Book, Settings, Camera, Edit3, Save, X } from 'lucide-react';components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
