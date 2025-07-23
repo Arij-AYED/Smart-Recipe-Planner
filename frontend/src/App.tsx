@@ -10,6 +10,7 @@ import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/AdminDashboard";
 import ChefDashboard from "./pages/ChefDashboard";
+import RecipeDetails from "./pages/RecipeDetails";
 import { Toaster as CustomToaster} from 'react-hot-toast';
 import UserProfile from "./pages/UserProfile";
 
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/signup" element={<Signup />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/chef" element={<ChefDashboard />} />
+          <Route path="/recipe/:id" element={<RecipeDetails />} />
           <Route path="/profile" element={<UserProfile />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

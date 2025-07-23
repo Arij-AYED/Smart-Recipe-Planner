@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
- import { Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/input';
 import { User, Heart, Book, Settings, Camera, Edit3, Save, X } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -25,7 +25,9 @@ interface UserData {
   profileImage?: string;
   bio?: string;
   location?: string;
+
   //favoriteRecipes?: string[];
+
 }
 
 const UserProfile = () => {
@@ -37,14 +39,17 @@ const UserProfile = () => {
     bio: '',
     location: ''
   });
+
   //const [favoriteRecipes, setFavoriteRecipes] = useState([]);
   const [userRecipes, setUserRecipes] = useState([]);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchUserData();
+
    // fetchFavoriteRecipes();
    fetchUserRecipes();
+
   }, []);
   useEffect(() => {
   const timeout = setTimeout(() => {
@@ -59,6 +64,7 @@ const UserProfile = () => {
 
   return () => clearTimeout(timeout);
 }, [user]);
+
 
 
   const fetchUserData = async () => {
@@ -99,6 +105,7 @@ const UserProfile = () => {
       console.error('Error fetching favorite recipes:', error);
     }
   };*/
+
 
   const fetchUserRecipes = async () => {
     try {
@@ -300,6 +307,7 @@ const UserProfile = () => {
         </Card>
 
         {/* Profile Tabs */}
+
          {/*<Tabs defaultValue="favorites" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="favorites" className="flex items-center space-x-2">
@@ -308,6 +316,7 @@ const UserProfile = () => {
             </TabsTrigger> */}
           <Tabs defaultValue={user.role === 'chef' ? "my-recipes" : "settings"} className="space-y-6">
           <TabsList className="grid w-full ${user.role === 'chef' ? 'grid-cols-2' : 'grid-cols-1'}">
+
             {user.role === 'chef' && (
               <TabsTrigger value="my-recipes" className="flex items-center space-x-2">
                 <Book className="w-4 h-4" />
@@ -319,6 +328,7 @@ const UserProfile = () => {
               <span>Settings</span>
             </TabsTrigger>
           </TabsList>
+
 
           {/*<TabsContent value="favorites" className="space-y-6">
             <Card>
@@ -348,7 +358,6 @@ const UserProfile = () => {
               </CardContent>
             </Card>
           </TabsContent>*/}
-
           {user.role === 'chef' && (
             <TabsContent value="my-recipes" className="space-y-6">
               <Card>
