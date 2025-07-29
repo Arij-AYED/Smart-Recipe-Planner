@@ -26,7 +26,7 @@ router.use(bodyParser.urlencoded({ extended: true }));
 // Get all approved recipes
 router.get('/', async (req, res) => {
   try {
-    const recipes = await Recipe.find({ status: 'Approved' });
+    const recipes = await Recipe.find({ status: 'Approved' }).populate('chefId', 'firstname lastname');
     console.log('Fetched approved recipes:', recipes.length);
     res.json(recipes);
   } catch (err) {
@@ -49,9 +49,13 @@ router.get('/tags', async (req, res) => {
 });
 
 // Get all recipes (for admin dashboard and ChefRecipeManager)
-router.get('/all', async (req, res) => {
+router.get('/all', authenticate, async (req, res) => {
   try {
-    const recipes = await Recipe.find();
+    // Only admins can access all recipes
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Unauthorized: Admin access required' });
+    }
+    const recipes = await Recipe.find().populate('chefId', 'firstname lastname');
     console.log('Fetched all recipes:', recipes.length);
     res.json(recipes);
   } catch (err) {
@@ -62,7 +66,7 @@ router.get('/all', async (req, res) => {
 
 // Create a new recipe with image upload
 router.post('/', authenticate, upload.single('image'), async (req, res) => {
-  console.log('Creating recipe, user ID:', req.user._id); // Debug log
+  console.log('Creating recipe, user ID:', req.user._id);
   if (!req.user._id) {
     console.error('No user ID found in request');
     return res.status(401).json({ message: 'Unauthorized: No user ID found' });
@@ -79,7 +83,7 @@ router.post('/', authenticate, upload.single('image'), async (req, res) => {
     image: req.file ? `/Uploads/${req.file.filename}` : '/placeholder.svg',
     tags: req.body.tags ? req.body.tags.split(',').map(tag => tag.trim()) : [],
     calories: req.body.calories ? parseInt(req.body.calories) : 0,
-    chefId: req.user._id, // Set chefId from authenticated user
+    chefId: req.user._id,
   };
   const recipe = new Recipe(recipeData);
   try {
@@ -98,8 +102,8 @@ router.put('/:id', authenticate, upload.single('image'), async (req, res) => {
     const recipe = await Recipe.findById(req.params.id);
     if (!recipe) return res.status(404).json({ message: 'Recipe not found' });
 
-    // Ensure the user can only update their own recipes
-    if (recipe.chefId !== req.user._id) {
+    // Admins can update any recipe's status; chefs can only update their own recipes
+    if (req.user.role !== 'admin' && recipe.chefId.toString() !== req.user._id) {
       return res.status(403).json({ message: 'Unauthorized to update this recipe' });
     }
 
@@ -110,13 +114,13 @@ router.put('/:id', authenticate, upload.single('image'), async (req, res) => {
     recipe.difficulty = req.body.difficulty || recipe.difficulty;
     recipe.ingredients = req.body.ingredients || recipe.ingredients;
     recipe.instructions = req.body.instructions || recipe.instructions;
-    recipe.status = req.body.status || recipe.status; // Allow status updates
+    recipe.status = req.body.status || recipe.status;
     if (req.file) {
       recipe.image = `/Uploads/${req.file.filename}`;
     }
     recipe.tags = req.body.tags ? req.body.tags.split(',').map(tag => tag.trim()) : recipe.tags;
     recipe.calories = req.body.calories ? parseInt(req.body.calories) : recipe.calories;
-    recipe.chefId = req.user._id; // Ensure chefId remains the authenticated user's ID
+    recipe.chefId = req.user._id;
 
     const updatedRecipe = await recipe.save();
     console.log('Recipe updated:', updatedRecipe);
@@ -134,7 +138,7 @@ router.delete('/:id', authenticate, async (req, res) => {
     if (!recipe) return res.status(404).json({ message: 'Recipe not found' });
 
     // Ensure the user can only delete their own recipes
-    if (recipe.chefId !== req.user._id) {
+    if (req.user.role !== 'admin' && recipe.chefId.toString() !== req.user._id) {
       return res.status(403).json({ message: 'Unauthorized to delete this recipe' });
     }
 
@@ -148,8 +152,8 @@ router.delete('/:id', authenticate, async (req, res) => {
 // Get recipes for the authenticated user
 router.get('/my-recipes', authenticate, async (req, res) => {
   try {
-    console.log('Fetching recipes for user:', req.user._id); // Debug log
-    const myRecipes = await Recipe.find({ chefId: req.user._id });
+    console.log('Fetching recipes for user:', req.user._id);
+    const myRecipes = await Recipe.find({ chefId: req.user._id }).populate('chefId', 'firstname lastname');
     console.log(`Fetched ${myRecipes.length} recipes for user ${req.user._id}`);
     res.json(myRecipes);
   } catch (err) {
@@ -166,7 +170,7 @@ router.get('/:id', async (req, res) => {
       console.log(`Invalid ObjectID: ${req.params.id}`);
       return res.status(400).json({ message: 'Invalid recipe ID format' });
     }
-    const recipe = await Recipe.findById(req.params.id);
+    const recipe = await Recipe.findById(req.params.id).populate('chefId', 'firstname lastname');
     if (!recipe) {
       console.log(`Recipe not found for ID: ${req.params.id}`);
       return res.status(404).json({ message: 'Recipe not found' });

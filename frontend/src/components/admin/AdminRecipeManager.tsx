@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Eye, Check, X, Clock, Users, ChefHat } from 'lucide-react';
 import { RecipePreview } from './RecipePreview';
+import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 const API_URL = 'http://localhost:3000'; // Matches backend port
 
@@ -12,19 +14,35 @@ export const AdminRecipeManager = () => {
   const [recipes, setRecipes] = useState([]);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const navigate = useNavigate();
 
   // Fetch all recipes from backend
   useEffect(() => {
     const fetchRecipes = async () => {
       try {
-        const response = await axios.get(`${API_URL}/recipes/all`);
+        const token = localStorage.getItem('token');
+        if (!token) {
+          toast.error('Please log in to view recipes');
+          navigate('/login');
+          return;
+        }
+        const response = await axios.get(`${API_URL}/recipes/all`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         setRecipes(response.data);
       } catch (error) {
-        console.error('Error fetching recipes:', error);
+        console.error('Error fetching recipes:', error.response?.data || error.message);
+        toast.error(error.response?.data?.message || 'Failed to fetch recipes');
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          toast.error('Session expired or unauthorized. Please log in again.');
+          navigate('/login');
+        }
       }
     };
     fetchRecipes();
-  }, []);
+  }, [navigate]);
 
   const handlePreview = (recipe) => {
     setSelectedRecipe(recipe);
@@ -33,23 +51,59 @@ export const AdminRecipeManager = () => {
 
   const handleApprove = async (id) => {
     try {
-      await axios.put(`${API_URL}/recipes/${id}`, { status: 'Approved' });
-      const response = await axios.get(`${API_URL}/recipes/all`);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Please log in to approve recipes');
+        navigate('/login');
+        return;
+      }
+      await axios.put(`${API_URL}/recipes/${id}`, { status: 'Approved' }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const response = await axios.get(`${API_URL}/recipes/all`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setRecipes(response.data);
       setPreviewOpen(false);
+      toast.success('Recipe approved successfully');
     } catch (error) {
-      console.error('Error approving recipe:', error);
+      console.error('Error approving recipe:', error.response?.data || error.message);
+      toast.error(error.response?.data?.message || 'Failed to approve recipe');
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        toast.error('Session expired or unauthorized. Please log in again.');
+        navigate('/login');
+      }
     }
   };
 
   const handleReject = async (id) => {
     try {
-      await axios.put(`${API_URL}/recipes/${id}`, { status: 'Rejected' });
-      const response = await axios.get(`${API_URL}/recipes/all`);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Please log in to reject recipes');
+        navigate('/login');
+        return;
+      }
+      await axios.put(`${API_URL}/recipes/${id}`, { status: 'Rejected' }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const response = await axios.get(`${API_URL}/recipes/all`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setRecipes(response.data);
       setPreviewOpen(false);
+      toast.success('Recipe rejected successfully');
     } catch (error) {
-      console.error('Error rejecting recipe:', error);
+      console.error('Error rejecting recipe:', error.response?.data || error.message);
+      toast.error(error.response?.data?.message || 'Failed to reject recipe');
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        toast.error('Session expired or unauthorized. Please log in again.');
+        navigate('/login');
+      }
     }
   };
 
@@ -111,7 +165,9 @@ export const AdminRecipeManager = () => {
                       {recipe.status}
                     </Badge>
                   </div>
-                  <p className="text-sm text-gray-600 mb-2">by {recipe.chefId || 'Unknown Chef'}</p>
+                  <p className="text-sm text-gray-600 mb-2">
+                    by {recipe.chefId ? `${recipe.chefId.firstname} ${recipe.chefId.lastname}` : 'Unknown Chef'}
+                  </p>
                   <div className="flex items-center gap-4 text-sm text-gray-500">
                     <div className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
