@@ -17,7 +17,7 @@ interface Recipe {
   difficulty: string;
   tags: string[];
   calories: number;
-  ingredients: string;
+  ingredients: string [];
 }
 
 interface RecipeCardProps {
