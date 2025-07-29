@@ -127,6 +127,28 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ error: 'Login failed' });
   }
 });
+//updating the user profile
+router.put('/profile',authenticate,async(req,res)=>{
+  const userId=req.user.id;
+  const {firstname,lastname,bio,location}=req.body;
+    console.log('Updating user profile for:', userId);
+  console.log('New data:', { firstname, lastname, bio, location });
+  try{
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { firstname, lastname, bio, location },
+      {new:true}
+    ).select('-password');
+
+    if(!updatedUser){
+      return res.status(404).json({error:'User not found'});
+    }
+    res.json(updatedUser);
+  }catch (err){
+    console.error('Error upating user profile',err);
+    res.status(500).json({error:'Failed to update profile'});
+  }
+});
 
 
 module.exports = router;

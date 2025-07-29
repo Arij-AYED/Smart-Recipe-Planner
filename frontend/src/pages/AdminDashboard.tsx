@@ -6,7 +6,7 @@ import { AdminRecipeManager } from '@/components/admin/AdminRecipeManager';
 import { AdminUserManager } from '@/components/admin/AdminUserManager';
 import { AdminStats } from '@/components/admin/AdminStats';
 import { Shield, Users, ChefHat, BarChart3 } from 'lucide-react';
-
+import { Link } from 'react-router-dom';
 const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 p-6">
@@ -48,6 +48,11 @@ const AdminDashboard = () => {
           </TabsContent>
         </Tabs>
       </div>
+      <div className="mt-6 text-center">
+          <Link to="/" className="text-sm text-gray-600 hover:text-gray-800">
+            ← Back to Home
+          </Link>
+        </div>
     </div>
   );
 };

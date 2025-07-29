@@ -184,18 +184,48 @@ const UserProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-green-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm border-b border-orange-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-green-600 bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
               My Profile
             </h1>
-            <Button
+            
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Profile Header */}
+        <Card className="mb-8">
+          <CardContent className="pt-6 relative">
+            <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-6 md:space-x-6">
+              <div className="relative">
+                <Avatar className="h-24 w-24">
+                  <AvatarImage src={user.profileImage} alt={user.firstname} />
+                  <AvatarFallback className="text-xl bg-gradient-to-r from-blue-400 to-green-400 text-white">
+                    {user.firstname.charAt(0)}{user.lastname.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                {isEditing && (
+                  <label className="absolute -bottom-2 -right-2 bg-blue-500 text-white p-2 rounded-full cursor-pointer hover:bg-green-600 transition-colors">
+                    <Camera className="w-4 h-4" />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+                </div>
+                <div className=" absolute top-0 right-4">
+              <Button
               onClick={() => setIsEditing(!isEditing)}
               variant={isEditing ? "outline" : "default"}
-              className="bg-gradient-to-r from-orange-500 to-green-500 hover:from-orange-600 hover:to-green-600"
+              className="bg-gradient-to-r from-blue-400 to-green-400 hover:from-blue-600 hover:to-green-600 "
             >
               {isEditing ? (
                 <>
@@ -209,34 +239,9 @@ const UserProfile = () => {
                 </>
               )}
             </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Profile Header */}
-        <Card className="mb-8">
-          <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6">
-              <div className="relative">
-                <Avatar className="h-24 w-24">
-                  <AvatarImage src={user.profileImage} alt={user.firstname} />
-                  <AvatarFallback className="text-xl bg-gradient-to-r from-orange-400 to-green-400 text-white">
-                    {user.firstname.charAt(0)}{user.lastname.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                {isEditing && (
-                  <label className="absolute -bottom-2 -right-2 bg-orange-500 text-white p-2 rounded-full cursor-pointer hover:bg-orange-600 transition-colors">
-                    <Camera className="w-4 h-4" />
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                    />
-                  </label>
-                )}
-              </div>
+            </div>
+                
+            
 
               <div className="flex-1 text-center md:text-left">
                 {isEditing ? (
@@ -277,10 +282,14 @@ const UserProfile = () => {
                         placeholder="Where are you located?"
                       />
                     </div>
-                    <Button onClick={handleSaveProfile} className="bg-gradient-to-r from-orange-500 to-green-500">
+                    <div className="flex justify-center">
+                    <Button onClick={handleSaveProfile} className="bg-gradient-to-r from-blue-500 to-green-500 ">
+                      
                       <Save className="w-4 h-4 mr-2" />
                       Save Changes
+            
                     </Button>
+                    </div>
                   </div>
                 ) : (
                   <>
@@ -291,7 +300,7 @@ const UserProfile = () => {
                     <div className="flex items-center justify-center md:justify-start space-x-2 mb-4">
                       <Badge 
                         variant={user.role === 'chef' ? 'default' : 'secondary'}
-                        className={user.role === 'chef' ? 'bg-gradient-to-r from-orange-500 to-green-500' : ''}
+                        className={user.role === 'chef' ? 'bg-gradient-to-r from-blue-500 to-green-500' : ''}
                       >
                         {user.role === 'chef' ? '👨‍🍳 Chef' : '👤 User'}
                       </Badge>
@@ -360,7 +369,7 @@ const UserProfile = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
-                    <Book className="w-5 h-5 text-orange-500" />
+                    <Book className="w-5 h-5 text-blue-500" />
                     <span>My Recipes</span>
                   </CardTitle>
                   <CardDescription>

@@ -20,7 +20,7 @@ const IngredientSearch = () => {
 
   const suggestedRecipes = [
     {
-      id: 1,
+      _id: "1",
       title: "Garlic Chicken with Tomatoes",
       image: "https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=400&h=300&fit=crop",
       cookTime: "30 min",
@@ -31,7 +31,7 @@ const IngredientSearch = () => {
       ingredients: ["Chicken", "Tomatoes", "Garlic", "Olive Oil"]
     },
     {
-      id: 2,
+      _id: "2",
       title: "Chicken Tomato Skillet",
       image: "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=400&h=300&fit=crop",
       cookTime: "25 min",
@@ -188,7 +188,7 @@ const IngredientSearch = () => {
             {suggestedRecipes.map((recipe) => {
               const matchPercentage = getMatchPercentage(recipe);
               return (
-                <div key={recipe.id} className="relative">
+                <div key={recipe._id} className="relative">
                   <div className="absolute top-3 left-3 z-10">
                     <Badge className="bg-green-500 text-white">
                       {matchPercentage}% match

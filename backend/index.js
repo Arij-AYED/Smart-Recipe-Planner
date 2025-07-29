@@ -27,6 +27,7 @@ app.use('/api/users', userRoutes);
 app.use('/recipes', recipeRoutes);
 app.use('/auth', authRoutes);
 
+app.use('/auth',require('./routes/auth'));
 const PORT = process.env.PORT ;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
