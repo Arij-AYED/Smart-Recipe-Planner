@@ -11,7 +11,7 @@ const mongoose = require('mongoose');
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'Uploads/'); // Ensure this directory exists or adjust path
+    cb(null, 'Uploads/');
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + '-' + file.originalname);
@@ -23,11 +23,42 @@ const upload = multer({ storage: storage });
 router.use(bodyParser.json());
 router.use(bodyParser.urlencoded({ extended: true }));
 
-// Get all approved recipes
+// Get all approved recipes with optional search and goal filtering
 router.get('/', async (req, res) => {
   try {
-    const recipes = await Recipe.find({ status: 'Approved' }).populate('chefId', 'firstname lastname');
-    console.log('Fetched approved recipes:', recipes.length);
+    const { q, goal } = req.query;
+    const query = { status: 'Approved' };
+
+    // Search by title, description, or tags
+    if (q) {
+      const searchRegex = new RegExp(q, 'i');
+      query.$or = [
+        { title: searchRegex },
+        { tags: searchRegex }
+      ];
+    }
+
+    // Filter by goal (mapped to tags)
+    if (goal) {
+      const goalToTags = {
+        'High Protein': ['high-protein', 'protein'],
+        'Low Carb': ['low-carb', 'keto'],
+        'Heart Healthy': ['heart-healthy', 'low-fat'],
+        'Quick Meals': ['quick-meals', 'under-30-minutes'],
+        'Vegan': ['vegan', 'plant-based'],
+        'Comfort Food': ['comfort-food', 'hearty','Comfort Food']
+      };
+      const tags = goalToTags[goal];
+      if (tags) {
+        query.tags = { $in: tags.map(tag => new RegExp(`^${tag}$`, 'i')) }; // Case-insensitive tag matching
+      } else {
+        console.log('Invalid goal:', goal);
+        return res.status(400).json({ message: 'Invalid goal' });
+      }
+    }
+
+    const recipes = await Recipe.find(query).populate('chefId', 'firstname lastname');
+    console.log('Fetched approved recipes:', recipes.length, 'Query:', query);
     res.json(recipes);
   } catch (err) {
     console.error('Error fetching approved recipes:', err.message);
@@ -80,7 +111,7 @@ router.post('/', authenticate, upload.single('image'), async (req, res) => {
     instructions: req.body.instructions,
     status: 'Pending',
     image: req.file ? `/Uploads/${req.file.filename}` : '/placeholder.svg',
-    tags: req.body.tags ? req.body.tags.split(',').map(tag => tag.trim()) : [],
+    tags: req.body.tags ? req.body.tags.split(',').map(tag => tag.trim().toLowerCase().replace(/\s+/g, '-')) : [],
     calories: req.body.calories ? parseInt(req.body.calories) : 0,
     chefId: req.user._id,
   };
@@ -117,7 +148,7 @@ router.put('/:id', authenticate, upload.single('image'), async (req, res) => {
       if (req.file) {
         recipe.image = `/Uploads/${req.file.filename}`;
       }
-      recipe.tags = req.body.tags ? req.body.tags.split(',').map(tag => tag.trim()) : recipe.tags;
+      recipe.tags = req.body.tags ? req.body.tags.split(',').map(tag => tag.trim().toLowerCase().replace(/\s+/g, '-')) : recipe.tags;
       recipe.calories = req.body.calories ? parseInt(req.body.calories) : recipe.calories;
     } else {
       return res.status(403).json({ message: 'Unauthorized to update this recipe' });

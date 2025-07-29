@@ -16,42 +16,58 @@ const API_URL = 'http://localhost:3000';
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [submittedSearchQuery, setSubmittedSearchQuery] = useState('');
   const [selectedTab, setSelectedTab] = useState('discover');
   const [recipes, setRecipes] = useState([]);
+  const [selectedGoal, setSelectedGoal] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch approved recipes from backend
+  // Fetch approved recipes from backend with submitted search and goal filters
   useEffect(() => {
     const fetchRecipes = async () => {
+      setIsLoading(true);
       try {
-        const response = await axios.get(`${API_URL}/recipes`);
+        const params = {};
+        if (submittedSearchQuery) params.q = submittedSearchQuery;
+        if (selectedGoal) params.goal = selectedGoal;
+        console.log('Fetching recipes with params:', params);
+        const response = await axios.get(`${API_URL}/recipes`, { params });
+        console.log('Recipes response:', response.data);
         setRecipes(response.data);
       } catch (error) {
-        console.error('Error fetching recipes:', error);
+        console.error('Error fetching recipes:', error.response?.data || error.message);
+        toast({
+          title: 'Error',
+          description: 'Failed to fetch recipes. Please try again.',
+          variant: 'destructive'
+        });
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchRecipes();
-  }, []);
+  }, [submittedSearchQuery, selectedGoal]);
 
   const quickGoals = [
-    { label: "High Protein", icon: "💪", color: "bg-orange-100 text-orange-800" },
-    { label: "Low Carb", icon: "🥬", color: "bg-green-100 text-green-800" },
-    { label: "Heart Healthy", icon: "❤️", color: "bg-red-100 text-red-800" },
-    { label: "Quick Meals", icon: "⚡", color: "bg-yellow-100 text-yellow-800" },
-    { label: "Vegan", icon: "🌱", color: "bg-emerald-100 text-emerald-800" },
-    { label: "Comfort Food", icon: "🍲", color: "bg-amber-100 text-amber-800" }
+    { label: 'High Protein', icon: '💪', color: 'bg-orange-100 text-orange-800' },
+    { label: 'Low Carb', icon: '🥬', color: 'bg-green-100 text-green-800' },
+    { label: 'Heart Healthy', icon: '❤️', color: 'bg-red-100 text-red-800' },
+    { label: 'Quick Meals', icon: '⚡', color: 'bg-yellow-100 text-yellow-800' },
+    { label: 'Vegan', icon: '🌱', color: 'bg-emerald-100 text-emerald-800' },
+    { label: 'Comfort Food', icon: '🍲', color: 'bg-amber-100 text-amber-800' }
   ];
 
   let user = null;
   try {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser && storedUser !== "undefined") {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser && storedUser !== 'undefined') {
       user = JSON.parse(storedUser);
-      console.log('Parsed user role:', user?.role); // Debug log to verify role
+      console.log('Parsed user role:', user?.role);
     } else {
       console.warn('No user data found in localStorage');
     }
   } catch (err) {
-    console.error("Failed to parse user from localStorage:", err);
+    console.error('Failed to parse user from localStorage:', err);
     user = null;
   }
 
@@ -59,6 +75,25 @@ const Index = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     window.location.href = '/login';
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    const query = e.target.elements.search.value.trim();
+    setSubmittedSearchQuery(query);
+    setSearchQuery(query); // Keep input in sync
+  };
+
+  const handleGoalClick = (goal) => {
+    console.log('Selected goal:', goal);
+    setSelectedGoal(goal === selectedGoal ? null : goal);
+  };
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setSubmittedSearchQuery('');
+    setSelectedGoal(null);
+    document.getElementById('search-input').value = '';
   };
 
   return (
@@ -72,7 +107,6 @@ const Index = () => {
                 <ChefHat className="w-6 h-6 text-white" />
               </div>
             </div>
-            
             <div className="flex items-center space-x-4">
               <nav className="flex space-x-1 bg-gray-100 rounded-lg p-1">
                 {[
@@ -162,22 +196,29 @@ const Index = () => {
               <p className="text-xl text-gray-600 max-w-2xl mx-auto">
                 AI-powered recipe suggestions based on your ingredients, dietary goals, and taste preferences
               </p>
-              
+
               {/* Smart Search Bar */}
               <div className="max-w-2xl mx-auto">
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <Input
-                    placeholder="Try 'high protein breakfast' or 'quick dinner ideas'..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-12 pr-4 py-6 text-lg border-2 border-orange-200 focus:border-orange-400 rounded-2xl"
-                  />
-                  <Button className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-orange-500 to-green-500 hover:from-orange-600 hover:to-green-600 rounded-xl">
-                    <Filter className="w-4 h-4 mr-2" />
-                    Search
-                  </Button>
-                </div>
+                <form onSubmit={handleSearch}>
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <Input
+                      id="search-input"
+                      name="search"
+                      placeholder="Try 'high protein breakfast' or 'quick dinner ideas'..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-12 pr-20 py-6 text-lg border-2 border-orange-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-300 rounded-2xl"
+                    />
+                    <Button
+                      type="submit"
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-orange-500 to-green-500 hover:from-orange-600 hover:to-green-600 rounded-xl"
+                    >
+                      <Filter className="w-4 h-4 mr-2" />
+                      Search
+                    </Button>
+                  </div>
+                </form>
               </div>
             </div>
 
@@ -188,7 +229,12 @@ const Index = () => {
                 {quickGoals.map((goal, index) => (
                   <button
                     key={index}
-                    className="p-4 rounded-xl border-2 border-gray-200 hover:border-orange-300 transition-all hover:scale-105 group"
+                    onClick={() => handleGoalClick(goal.label)}
+                    className={`p-4 rounded-xl border-2 transition-all hover:scale-105 group ${
+                      selectedGoal === goal.label
+                        ? 'border-orange-400 bg-orange-50'
+                        : 'border-gray-200 hover:border-orange-300'
+                    }`}
                   >
                     <div className="text-2xl mb-2 group-hover:scale-110 transition-transform">{goal.icon}</div>
                     <div className={`px-3 py-1 rounded-full text-sm font-medium ${goal.color}`}>
@@ -203,15 +249,31 @@ const Index = () => {
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h3 className="text-2xl font-semibold text-gray-900">Featured Recipes</h3>
-                <Button variant="outline" className="text-orange-600 border-orange-200 hover:bg-orange-50">
+                <Button
+                  variant="outline"
+                  className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                  onClick={clearFilters}
+                >
                   View All Recipes
                 </Button>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {recipes.map((recipe) => (
-                  <RecipeCard key={recipe._id} recipe={recipe} user={user}/>
-                ))}
+                {isLoading ? (
+                  <div className="col-span-full text-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading recipes...</p>
+                  </div>
+                ) : recipes.length > 0 ? (
+                  recipes.map((recipe) => (
+                    <RecipeCard key={recipe._id} recipe={recipe} user={user} />
+                  ))
+                ) : (
+                  <div className="col-span-full text-center py-12">
+                    <p className="text-gray-500">No recipes found</p>
+                    <p className="text-sm text-gray-400">Try adjusting your search or filters</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -237,6 +299,7 @@ const Index = () => {
           </div>
         )}
       </main>
+      <Toaster />
     </div>
   );
 };

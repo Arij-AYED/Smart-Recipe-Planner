@@ -6,6 +6,8 @@ const adminRoutes=require('./routes/admin');
 const authRoutes = require ('./routes/auth');
 const userRoutes = require('./routes/users');
 const recipeRoutes = require('./routes/recipes');
+const mealPlanRoutes = require('./routes/mealPlans');
+
 const path = require('path');
 
 
@@ -26,6 +28,7 @@ app.use('/users', userRoutes);
 app.use('/api/users', userRoutes); 
 app.use('/recipes', recipeRoutes);
 app.use('/auth', authRoutes);
+app.use('/meal-plans', mealPlanRoutes);
 
 app.use('/auth',require('./routes/auth'));
 const PORT = process.env.PORT ;
