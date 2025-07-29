@@ -10,7 +10,7 @@ const recipeSchema = new mongoose.Schema({
   instructions: String,
   status: { type: String, default: 'Pending' },
   image: String,
-  chefId: { type: String, default: '1' }, // Optional field for chef association
+  chefId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   tags: [{ type: String, default: [] }],    // Array of tags
   calories: { type: Number, default: 0 },   // Number of calories
 });

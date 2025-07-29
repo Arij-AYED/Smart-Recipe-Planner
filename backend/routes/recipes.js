@@ -8,11 +8,10 @@ const fs = require('fs').promises;
 const path = require('path');
 const mongoose = require('mongoose');
 
-
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Ensure this directory exists or adjust path
+    cb(null, 'Uploads/'); // Ensure this directory exists or adjust path
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + '-' + file.originalname);
@@ -23,7 +22,6 @@ const upload = multer({ storage: storage });
 // Middleware to parse JSON and urlencoded data
 router.use(bodyParser.json());
 router.use(bodyParser.urlencoded({ extended: true }));
-
 
 // Get all approved recipes
 router.get('/', async (req, res) => {
@@ -62,10 +60,13 @@ router.get('/all', async (req, res) => {
   }
 });
 
-
-
 // Create a new recipe with image upload
-router.post('/', upload.single('image'), async (req, res) => {
+router.post('/', authenticate, upload.single('image'), async (req, res) => {
+  console.log('Creating recipe, user ID:', req.user._id); // Debug log
+  if (!req.user._id) {
+    console.error('No user ID found in request');
+    return res.status(401).json({ message: 'Unauthorized: No user ID found' });
+  }
   const recipeData = {
     title: req.body.title,
     description: req.body.description,
@@ -75,15 +76,15 @@ router.post('/', upload.single('image'), async (req, res) => {
     ingredients: req.body.ingredients,
     instructions: req.body.instructions,
     status: 'Pending',
-    image: req.file ? `/uploads/${req.file.filename}` : '/placeholder.svg',
+    image: req.file ? `/Uploads/${req.file.filename}` : '/placeholder.svg',
     tags: req.body.tags ? req.body.tags.split(',').map(tag => tag.trim()) : [],
     calories: req.body.calories ? parseInt(req.body.calories) : 0,
-    chefId: req.body.chefId ,
+    chefId: req.user._id, // Set chefId from authenticated user
   };
   const recipe = new Recipe(recipeData);
   try {
     const newRecipe = await recipe.save();
-    console.log('Recipe saved:', newRecipe);
+    console.log('Recipe saved with chefId:', newRecipe.chefId);
     res.status(201).json(newRecipe);
   } catch (err) {
     console.error('Error saving recipe:', err.message);
@@ -91,12 +92,16 @@ router.post('/', upload.single('image'), async (req, res) => {
   }
 });
 
-
 // Update a recipe with image upload or status change
-router.put('/:id', upload.single('image'), async (req, res) => {
+router.put('/:id', authenticate, upload.single('image'), async (req, res) => {
   try {
     const recipe = await Recipe.findById(req.params.id);
     if (!recipe) return res.status(404).json({ message: 'Recipe not found' });
+
+    // Ensure the user can only update their own recipes
+    if (recipe.chefId !== req.user._id) {
+      return res.status(403).json({ message: 'Unauthorized to update this recipe' });
+    }
 
     recipe.title = req.body.title || recipe.title;
     recipe.description = req.body.description || recipe.description;
@@ -107,11 +112,11 @@ router.put('/:id', upload.single('image'), async (req, res) => {
     recipe.instructions = req.body.instructions || recipe.instructions;
     recipe.status = req.body.status || recipe.status; // Allow status updates
     if (req.file) {
-      recipe.image = `/uploads/${req.file.filename}`;
+      recipe.image = `/Uploads/${req.file.filename}`;
     }
     recipe.tags = req.body.tags ? req.body.tags.split(',').map(tag => tag.trim()) : recipe.tags;
     recipe.calories = req.body.calories ? parseInt(req.body.calories) : recipe.calories;
-    recipe.chefId = req.body.chefId || recipe.chefId;
+    recipe.chefId = req.user._id; // Ensure chefId remains the authenticated user's ID
 
     const updatedRecipe = await recipe.save();
     console.log('Recipe updated:', updatedRecipe);
@@ -123,10 +128,16 @@ router.put('/:id', upload.single('image'), async (req, res) => {
 });
 
 // Delete a recipe
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticate, async (req, res) => {
   try {
     const recipe = await Recipe.findById(req.params.id);
     if (!recipe) return res.status(404).json({ message: 'Recipe not found' });
+
+    // Ensure the user can only delete their own recipes
+    if (recipe.chefId !== req.user._id) {
+      return res.status(403).json({ message: 'Unauthorized to delete this recipe' });
+    }
+
     await recipe.deleteOne();
     res.json({ message: 'Recipe deleted' });
   } catch (err) {
@@ -134,16 +145,20 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// Get recipes for the authenticated user
 router.get('/my-recipes', authenticate, async (req, res) => {
   try {
-    const myRecipes = await Recipe.find({ createdBy: req.user._id }); // assuming `createdBy` field exists
+    console.log('Fetching recipes for user:', req.user._id); // Debug log
+    const myRecipes = await Recipe.find({ chefId: req.user._id });
+    console.log(`Fetched ${myRecipes.length} recipes for user ${req.user._id}`);
     res.json(myRecipes);
   } catch (err) {
-    console.error(err);
+    console.error('Error fetching user recipes:', err.message);
     res.status(500).json({ error: 'Failed to fetch user recipes' });
-  }});
+  }
+});
 
-// Get a single recipe by ID (must be after specific routes)
+// Get a single recipe by ID
 router.get('/:id', async (req, res) => {
   try {
     console.log(`Fetching recipe with ID: ${req.params.id}`);
@@ -161,7 +176,7 @@ router.get('/:id', async (req, res) => {
   } catch (err) {
     console.error('Error fetching recipe:', err.message);
     res.status(500).json({ message: err.message });
-
   }
 });
+
 module.exports = router;

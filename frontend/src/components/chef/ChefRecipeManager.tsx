@@ -9,6 +9,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, Clock, Users, ChefHat, Eye, Flame } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const API_URL = 'http://localhost:3000'; // Matches backend port
 
@@ -28,27 +30,44 @@ export const ChefRecipeManager = () => {
     image: null as File | null,
     tags: [] as string[],
     calories: '',
-    newTag: '', // New state for typing a new tag
+    newTag: '',
   });
+  const navigate = useNavigate();
 
-  // Fetch all recipes and available tags from backend
+  // Fetch user's recipes and available tags from backend
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          toast.error('Please log in to view your recipes');
+          navigate('/login');
+          return;
+        }
+        console.log('Fetching recipes with token:', token); // Debug log
         const [recipesResponse, tagsResponse] = await Promise.all([
-          axios.get(`${API_URL}/recipes/all`), // Changed to /all to fetch all recipes
-          axios.get(`${API_URL}/recipes/tags`),
+          axios.get(`${API_URL}/recipes/my-recipes`, {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          axios.get(`${API_URL}/recipes/tags`)
         ]);
-        console.log('Recipes fetched:', recipesResponse.data); // Debug log
-        console.log('Tags fetched:', tagsResponse.data); // Debug log
+        console.log('User recipes fetched:', recipesResponse.data);
+        console.log('Tags fetched:', tagsResponse.data);
         setRecipes(recipesResponse.data);
         setAvailableTags(tagsResponse.data);
       } catch (error) {
         console.error('Error fetching data:', error.response?.data || error.message);
+        toast.error(error.response?.data?.error || 'Failed to fetch recipes');
+        if (error.response?.status === 401) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          toast.error('Session expired. Please log in again.');
+          navigate('/login');
+        }
       }
     };
     fetchData();
-  }, []);
+  }, [navigate]);
 
   // Handle creating or updating a recipe
   const handleSaveRecipe = async () => {
@@ -69,21 +88,37 @@ export const ChefRecipeManager = () => {
     if (formData.calories) {
       dataToSend.append('calories', formData.calories);
     }
-    // Add chefId (hardcoded for now, adjust based on auth system)
-    dataToSend.append('chefId', '1'); // Matches default in Recipe.js
 
     try {
-      console.log('Sending data:', Object.fromEntries(dataToSend)); // Debug log
+      console.log('Sending recipe data:', Object.fromEntries(dataToSend)); // Debug log
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Please log in to save recipes');
+        navigate('/login');
+        return;
+      }
+      console.log('Sending request with token:', token); // Debug log
       if (editingRecipe) {
         await axios.put(`${API_URL}/recipes/${editingRecipe._id}`, dataToSend, {
-          headers: { 'Content-Type': 'multipart/form-data' },
+          headers: { 
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`
+          },
         });
+        toast.success('Recipe updated successfully');
       } else {
-        await axios.post(`${API_URL}/recipes`, dataToSend, {
-          headers: { 'Content-Type': 'multipart/form-data' },
+        const response = await axios.post(`${API_URL}/recipes`, dataToSend, {
+          headers: { 
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`
+          },
         });
+        console.log('Created recipe:', response.data); // Debug log
+        toast.success('Recipe created successfully');
       }
-      const response = await axios.get(`${API_URL}/recipes/all`); // Fetch all recipes
+      const response = await axios.get(`${API_URL}/recipes/my-recipes`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setRecipes(response.data);
       setFormData({
         title: '',
@@ -102,17 +137,42 @@ export const ChefRecipeManager = () => {
       setIsCreateOpen(false);
     } catch (error) {
       console.error('Error saving recipe:', error.response?.data || error.message);
+      toast.error(error.response?.data?.message || 'Failed to save recipe');
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        toast.error('Session expired. Please log in again.');
+        navigate('/login');
+      }
     }
   };
 
   // Handle deleting a recipe
   const handleDeleteRecipe = async (id) => {
     try {
-      await axios.delete(`${API_URL}/recipes/${id}`);
-      const response = await axios.get(`${API_URL}/recipes/all`); // Fetch all recipes
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Please log in to delete recipes');
+        navigate('/login');
+        return;
+      }
+      await axios.delete(`${API_URL}/recipes/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const response = await axios.get(`${API_URL}/recipes/my-recipes`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setRecipes(response.data);
+      toast.success('Recipe deleted successfully');
     } catch (error) {
       console.error('Error deleting recipe:', error.response?.data || error.message);
+      toast.error(error.response?.data?.message || 'Failed to delete recipe');
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        toast.error('Session expired. Please log in again.');
+        navigate('/login');
+      }
     }
   };
 
@@ -382,7 +442,8 @@ export const ChefRecipeManager = () => {
                 </div>
                 {recipe.calories > 0 && (
                   <div className="flex items-center gap-1 ml-20 font-semibold text-orange-600">
-                    <Flame className='h-4 w-4'/>{recipe.calories} cal
+                    <Flame className='h-4 w-4'/>
+                    {recipe.calories} cal
                   </div>
                 )}
               </div>
