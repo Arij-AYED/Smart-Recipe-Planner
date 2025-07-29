@@ -21,9 +21,10 @@ const storage = multer.diskStorage({
     cb(null, uniqueName);
   }
 });
+const multerUpload = multer({ storage: storage });
 
 // Sign up route
-router.post('/register', upload.fields([
+router.post('/register', multerUpload.fields([
   { name: 'profileImage', maxCount: 1 },
   { name: 'certificate', maxCount: 1 }
 ]), async (req, res) => {
@@ -96,33 +97,34 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ error: 'Login failed' });
   }
 });
-//updating the user profile
-router.put('/profile',authenticate,async(req,res)=>{
-  const userId=req.user.id;
-  const {firstname,lastname,bio,location}=req.body;
-    console.log('Updating user profile for:', userId);
+
+// Updating the user profile
+router.put('/profile', authenticate, async (req, res) => {
+  const userId = req.user._id; // Changed from req.user.id
+  const { firstname, lastname, bio, location } = req.body;
+  console.log('Updating user profile for:', userId);
   console.log('New data:', { firstname, lastname, bio, location });
-  try{
+  try {
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { firstname, lastname, bio, location },
-      {new:true}
+      { new: true }
     ).select('-password');
 
-    if(!updatedUser){
-      return res.status(404).json({error:'User not found'});
+    if (!updatedUser) {
+      return res.status(404).json({ error: 'User not found' });
     }
     res.json(updatedUser);
-  }catch (err){
-    console.error('Error upating user profile',err);
-    res.status(500).json({error:'Failed to update profile'});
+  } catch (err) {
+    console.error('Error updating user profile:', err);
+    res.status(500).json({ error: 'Failed to update profile' });
   }
 });
 
 // Profile route
 router.get('/profile', authenticate, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user._id; // Changed from req.user.id
     console.log('Fetching profile for user:', userId);
     const user = await User.findById(userId).select('-password');
 
@@ -133,6 +135,31 @@ router.get('/profile', authenticate, async (req, res) => {
   } catch (err) {
     console.error('Error fetching user profile:', err);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Upload avatar route
+router.post('/upload-avatar', authenticate, multerUpload.single('profileImage'), async (req, res) => {
+  try {
+    const userId = req.user._id; // Changed from req.user.id
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    const imagePath = `/Uploads/${file.filename}`;
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { profileImage: imagePath },
+      { new: true }
+    ).select('-password');
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json({ profileImage: imagePath });
+  } catch (err) {
+    console.error('Error uploading avatar:', err);
+    res.status(500).json({ error: 'Failed to upload avatar' });
   }
 });
 

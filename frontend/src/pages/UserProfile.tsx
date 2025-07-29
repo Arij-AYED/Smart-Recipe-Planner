@@ -35,7 +35,6 @@ const UserProfile = () => {
     bio: '',
     location: ''
   });
-
   const [favoriteRecipes, setFavoriteRecipes] = useState([]);
   const [userRecipes, setUserRecipes] = useState([]);
   const { toast } = useToast();
@@ -61,7 +60,6 @@ const UserProfile = () => {
 
   const fetchUserData = async () => {
     const token = localStorage.getItem('token');
-
     if (!token) {
       toast({
         title: "Not Logged In",
@@ -72,25 +70,30 @@ const UserProfile = () => {
     }
 
     try {
+      console.log('Fetching user profile with token:', token); // Debug log
       const response = await axios.get(`${API_URL}/auth/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      console.log('User profile response:', response.data); // Debug log
       setUser(response.data);
-
-      // Initialize edit form fields with fetched user data
       setEditForm({
         firstname: response.data.firstname || '',
         lastname: response.data.lastname || '',
         bio: response.data.bio || '',
         location: response.data.location || ''
       });
-    } catch (error: any) {
-      console.error("Error fetching user data:", error.response?.data || error.message);
+    } catch (error) {
+      console.error('Error fetching user data:', error.response?.data || error.message);
       toast({
         title: "Error",
         description: "Failed to load profile. Please try again.",
         variant: "destructive"
       });
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
     }
   };
 
@@ -100,9 +103,15 @@ const UserProfile = () => {
       const response = await axios.get(`${API_URL}/users/favorites`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      console.log('Favorite recipes response:', response.data); // Debug log
       setFavoriteRecipes(response.data);
     } catch (error) {
-      console.error('Error fetching favorite recipes:', error);
+      console.error('Error fetching favorite recipes:', error.response?.data || error.message);
+      toast({
+        title: "Error",
+        description: "Failed to load favorite recipes.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -112,9 +121,15 @@ const UserProfile = () => {
       const response = await axios.get(`${API_URL}/recipes/my-recipes`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      console.log('User recipes response:', response.data); // Debug log
       setUserRecipes(response.data);
     } catch (error) {
-      console.error('Error fetching user recipes:', error);
+      console.error('Error fetching user recipes:', error.response?.data || error.message);
+      toast({
+        title: "Error",
+        description: "Failed to load your recipes.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -132,7 +147,7 @@ const UserProfile = () => {
         description: "Profile updated successfully"
       });
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error('Error updating profile:', error.response?.data || error.message);
       toast({
         title: "Error",
         description: "Failed to update profile",
@@ -163,7 +178,7 @@ const UserProfile = () => {
         description: "Profile image updated successfully"
       });
     } catch (error) {
-      console.error('Error uploading image:', error);
+      console.error('Error uploading image:', error.response?.data || error.message);
       toast({
         title: "Error",
         description: "Failed to upload image",
@@ -192,7 +207,6 @@ const UserProfile = () => {
             <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
               My Profile
             </h1>
-            
           </div>
         </div>
       </header>
@@ -220,28 +234,26 @@ const UserProfile = () => {
                     />
                   </label>
                 )}
-                </div>
-                <div className=" absolute top-0 right-4">
-              <Button
-              onClick={() => setIsEditing(!isEditing)}
-              variant={isEditing ? "outline" : "default"}
-              className="bg-gradient-to-r from-blue-400 to-green-400 hover:from-blue-600 hover:to-green-600 "
-            >
-              {isEditing ? (
-                <>
-                  <X className="w-4 h-4 mr-2" />
-                  Cancel
-                </>
-              ) : (
-                <>
-                  <Edit3 className="w-4 h-4 mr-2" />
-                  Edit Profile
-                </>
-              )}
-            </Button>
-            </div>
-                
-            
+              </div>
+              <div className="absolute top-0 right-4">
+                <Button
+                  onClick={() => setIsEditing(!isEditing)}
+                  variant={isEditing ? "outline" : "default"}
+                  className="bg-gradient-to-r from-blue-400 to-green-400 hover:from-blue-600 hover:to-green-600"
+                >
+                  {isEditing ? (
+                    <>
+                      <X className="w-4 h-4 mr-2" />
+                      Cancel
+                    </>
+                  ) : (
+                    <>
+                      <Edit3 className="w-4 h-4 mr-2" />
+                      Edit Profile
+                    </>
+                  )}
+                </Button>
+              </div>
 
               <div className="flex-1 text-center md:text-left">
                 {isEditing ? (
@@ -283,12 +295,13 @@ const UserProfile = () => {
                       />
                     </div>
                     <div className="flex justify-center">
-                    <Button onClick={handleSaveProfile} className="bg-gradient-to-r from-blue-500 to-green-500 ">
-                      
-                      <Save className="w-4 h-4 mr-2" />
-                      Save Changes
-            
-                    </Button>
+                      <Button
+                        onClick={handleSaveProfile}
+                        className="bg-gradient-to-r from-blue-500 to-green-500"
+                      >
+                        <Save className="w-4 h-4 mr-2" />
+                        Save Changes
+                      </Button>
                     </div>
                   </div>
                 ) : (
@@ -298,7 +311,7 @@ const UserProfile = () => {
                     </h2>
                     <p className="text-gray-600 mb-2">{user.email}</p>
                     <div className="flex items-center justify-center md:justify-start space-x-2 mb-4">
-                      <Badge 
+                      <Badge
                         variant={user.role === 'chef' ? 'default' : 'secondary'}
                         className={user.role === 'chef' ? 'bg-gradient-to-r from-blue-500 to-green-500' : ''}
                       >
@@ -316,19 +329,17 @@ const UserProfile = () => {
 
         {/* Tabs */}
         <Tabs defaultValue={user.role === 'chef' ? "my-recipes" : "favorites"} className="space-y-6">
-          <TabsList className={`grid w-full ${user.role === 'chef' ? 'grid-cols-3' : 'grid-cols-1'}`}>
+          <TabsList className={`grid w-full ${user.role === 'chef' ? 'grid-cols-3' : 'grid-cols-2'}`}>
             <TabsTrigger value="favorites" className="flex items-center space-x-2">
               <Heart className="w-4 h-4" />
               <span>Favorites</span>
             </TabsTrigger>
-
             {user.role === 'chef' && (
               <TabsTrigger value="my-recipes" className="flex items-center space-x-2">
                 <Book className="w-4 h-4" />
                 <span>My Recipes</span>
               </TabsTrigger>
             )}
-
             <TabsTrigger value="settings" className="flex items-center space-x-2">
               <Settings className="w-4 h-4" />
               <span>Settings</span>
@@ -414,10 +425,10 @@ const UserProfile = () => {
                   </div>
                   <div>
                     <Label>Account Type</Label>
-                    <Input 
-                      value={user.role.charAt(0).toUpperCase() + user.role.slice(1)} 
-                      disabled 
-                      className="bg-gray-50" 
+                    <Input
+                      value={user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                      disabled
+                      className="bg-gray-50"
                     />
                   </div>
                   {user.certificate && (
@@ -431,7 +442,7 @@ const UserProfile = () => {
                     </div>
                   )}
                 </div>
-                
+
                 <div className="pt-6 border-t">
                   <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50">
                     Delete Account

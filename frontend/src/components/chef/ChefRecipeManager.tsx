@@ -8,15 +8,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, Clock, Users, ChefHat, Eye, Flame } from 'lucide-react';
+import { Plus, Edit, Trash2, Clock, Users, ChefHat, Eye, Flame, Book } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
-const API_URL = 'http://localhost:3000'; // Matches backend port
+const API_URL = 'http://localhost:3000';
 
 export const ChefRecipeManager = () => {
   const [recipes, setRecipes] = useState([]);
-  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [availableTags, setAvailableTags] = useState([]);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState(null);
   const [formData, setFormData] = useState({
@@ -27,8 +27,8 @@ export const ChefRecipeManager = () => {
     difficulty: '',
     ingredients: '',
     instructions: '',
-    image: null as File | null,
-    tags: [] as string[],
+    image: null,
+    tags: [],
     calories: '',
     newTag: '',
   });
@@ -39,29 +39,31 @@ export const ChefRecipeManager = () => {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        console.log('User role:', user.role); // Debug log
         if (!token) {
           toast.error('Please log in to view your recipes');
           navigate('/login');
           return;
         }
-        console.log('Fetching recipes with token:', token); // Debug log
+        console.log('Fetching recipes with token:', token);
         const [recipesResponse, tagsResponse] = await Promise.all([
           axios.get(`${API_URL}/recipes/my-recipes`, {
             headers: { Authorization: `Bearer ${token}` }
           }),
           axios.get(`${API_URL}/recipes/tags`)
         ]);
-        console.log('User recipes fetched:', recipesResponse.data);
-        console.log('Tags fetched:', tagsResponse.data);
+        console.log('User recipes response:', recipesResponse.data); // Debug log
+        console.log('Tags response:', tagsResponse.data);
         setRecipes(recipesResponse.data);
         setAvailableTags(tagsResponse.data);
       } catch (error) {
         console.error('Error fetching data:', error.response?.data || error.message);
         toast.error(error.response?.data?.error || 'Failed to fetch recipes');
-        if (error.response?.status === 401) {
+        if (error.response?.status === 401 || error.response?.status === 403) {
           localStorage.removeItem('token');
           localStorage.removeItem('user');
-          toast.error('Session expired. Please log in again.');
+          toast.error('Session expired or unauthorized. Please log in again.');
           navigate('/login');
         }
       }
@@ -90,17 +92,17 @@ export const ChefRecipeManager = () => {
     }
 
     try {
-      console.log('Sending recipe data:', Object.fromEntries(dataToSend)); // Debug log
+      console.log('Sending recipe data:', Object.fromEntries(dataToSend));
       const token = localStorage.getItem('token');
       if (!token) {
         toast.error('Please log in to save recipes');
         navigate('/login');
         return;
       }
-      console.log('Sending request with token:', token); // Debug log
+      console.log('Sending request with token:', token);
       if (editingRecipe) {
         await axios.put(`${API_URL}/recipes/${editingRecipe._id}`, dataToSend, {
-          headers: { 
+          headers: {
             'Content-Type': 'multipart/form-data',
             Authorization: `Bearer ${token}`
           },
@@ -108,12 +110,12 @@ export const ChefRecipeManager = () => {
         toast.success('Recipe updated successfully');
       } else {
         const response = await axios.post(`${API_URL}/recipes`, dataToSend, {
-          headers: { 
+          headers: {
             'Content-Type': 'multipart/form-data',
             Authorization: `Bearer ${token}`
           },
         });
-        console.log('Created recipe:', response.data); // Debug log
+        console.log('Created recipe:', response.data);
         toast.success('Recipe created successfully');
       }
       const response = await axios.get(`${API_URL}/recipes/my-recipes`, {
@@ -138,10 +140,10 @@ export const ChefRecipeManager = () => {
     } catch (error) {
       console.error('Error saving recipe:', error.response?.data || error.message);
       toast.error(error.response?.data?.message || 'Failed to save recipe');
-      if (error.response?.status === 401) {
+      if (error.response?.status === 401 || error.response?.status === 403) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        toast.error('Session expired. Please log in again.');
+        toast.error('Session expired or unauthorized. Please log in again.');
         navigate('/login');
       }
     }
@@ -167,10 +169,10 @@ export const ChefRecipeManager = () => {
     } catch (error) {
       console.error('Error deleting recipe:', error.response?.data || error.message);
       toast.error(error.response?.data?.message || 'Failed to delete recipe');
-      if (error.response?.status === 401) {
+      if (error.response?.status === 401 || error.response?.status === 403) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        toast.error('Session expired. Please log in again.');
+        toast.error('Session expired or unauthorized. Please log in again.');
         navigate('/login');
       }
     }
@@ -409,70 +411,86 @@ export const ChefRecipeManager = () => {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {recipes.map((recipe) => (
-          <Card key={recipe._id} className="overflow-hidden">
-            <div className="aspect-video bg-gray-100 relative">
-              <img
-                src={`${API_URL}${recipe.image || '/placeholder.svg'}`} // Use full backend URL
-                alt={recipe.title}
-                className="w-full h-full object-cover"
-                onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }} // Fallback if image fails
-              />
-              <Badge className={`absolute top-2 right-2 ${getStatusColor(recipe.status)}`}>
-                {recipe.status}
-              </Badge>
-            </div>
-            <CardHeader>
-              <CardTitle className="text-lg">{recipe.title}</CardTitle>
-              <CardDescription>{truncateDescription(recipe.description)}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
-                <div className="flex items-center gap-1">
-                  <Clock className="h-4 w-4" />
-                  {recipe.cookTime} min
-                </div>
-                <div className="flex items-center gap-1">
-                  <Users className="h-4 w-4" />
-                  {recipe.servings}
-                </div>
-                <div className="flex items-center gap-1">
-                  <ChefHat className="h-4 w-4" />
-                  {recipe.difficulty}
-                </div>
-                {recipe.calories > 0 && (
-                  <div className="flex items-center gap-1 ml-20 font-semibold text-orange-600">
-                    <Flame className='h-4 w-4'/>
-                    {recipe.calories} cal
+        {recipes.length === 0 ? (
+          <div className="col-span-full text-center py-12">
+            <Book className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500">No recipes created yet</p>
+            <p className="text-sm text-gray-400">Start sharing your culinary creations!</p>
+          </div>
+        ) : (
+          recipes.map((recipe) => (
+            <Card key={recipe._id} className="overflow-hidden">
+              <div className="aspect-video bg-gray-100 relative">
+                <img
+                  src={`${API_URL}${recipe.image || '/placeholder.svg'}`}
+                  alt={recipe.title}
+                  className="w-full h-full object-cover"
+                  onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }}
+                />
+                <Badge className={`absolute top-2 right-2 ${getStatusColor(recipe.status)}`}>
+                  {recipe.status}
+                </Badge>
+              </div>
+              <CardHeader>
+                <CardTitle className="text-lg">{recipe.title}</CardTitle>
+                <CardDescription>{truncateDescription(recipe.description)}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
+                    {recipe.cookTime} min
                   </div>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-1 mb-2">
-                {recipe.tags && recipe.tags.map((tag) => (
-                  <Badge key={tag} className="bg-slate-200 text-slate-800">{tag}</Badge>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" className='text-black-600 hover:text-grey-700  size-1/3 hover:-translate-y-0.5 transition-all duration-500 cursor-pointer' onClick={() => handleEditRecipe(recipe)}>
-                  <Eye className="h-4 w-4 mr-1 transition-transform duration-500 " />
-                  View
-                </Button>
-                <Button variant="outline" className='text-blue-600 hover:text-blue-700 size-1/3 hover:-translate-y-0.5 transition-all duration-500 cursor-pointer' onClick={() => handleEditRecipe(recipe)}>
-                  <Edit className="h-4 w-4 mr-1 transition-transform duration-500 " />
-                  Edit
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleDeleteRecipe(recipe._id)}
-                  className="text-red-600 hover:text-red-700 size-1/3 hover:-translate-y-0.5 transition-all duration-500 cursor-pointer"
-                >
-                  <Trash2 className="h-4 w-4 mr-1 transition-transform duration-500" />
-                  Delete
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                  <div className="flex items-center gap-1">
+                    <Users className="h-4 w-4" />
+                    {recipe.servings}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <ChefHat className="h-4 w-4" />
+                    {recipe.difficulty}
+                  </div>
+                  {recipe.calories > 0 && (
+                    <div className="flex items-center gap-1 ml-20 font-semibold text-orange-600">
+                      <Flame className="h-4 w-4" />
+                      {recipe.calories} cal
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {recipe.tags && recipe.tags.map((tag) => (
+                    <Badge key={tag} className="bg-slate-200 text-slate-800">{tag}</Badge>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="text-black-600 hover:text-grey-700 size-1/3 hover:-translate-y-0.5 transition-all duration-500 cursor-pointer"
+                    onClick={() => handleEditRecipe(recipe)}
+                  >
+                    <Eye className="h-4 w-4 mr-1 transition-transform duration-500" />
+                    View
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="text-blue-600 hover:text-blue-700 size-1/3 hover:-translate-y-0.5 transition-all duration-500 cursor-pointer"
+                    onClick={() => handleEditRecipe(recipe)}
+                  >
+                    <Edit className="h-4 w-4 mr-1 transition-transform duration-500" />
+                    Edit
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleDeleteRecipe(recipe._id)}
+                    className="text-red-600 hover:text-red-700 size-1/3 hover:-translate-y-0.5 transition-all duration-500 cursor-pointer"
+                  >
+                    <Trash2 className="h-4 w-4 mr-1 transition-transform duration-500" />
+                    Delete
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
     </div>
   );
