@@ -22,6 +22,7 @@ app.use('/uploads',express.static('public/uploads'));
 //use auth routes
 app.use('/api',authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/users', userRoutes); 
 app.use('/api/users', userRoutes); 
 app.use('/recipes', recipeRoutes);
 app.use('/auth', authRoutes);
