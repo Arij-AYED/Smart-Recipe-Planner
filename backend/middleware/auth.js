@@ -1,26 +1,24 @@
-const jwt =require('jsonwebtoken');
-const User=require('../models/User');
+const jwt = require('jsonwebtoken');
 
 const authenticate = (req, res, next) => {
   const authHeader = req.headers.authorization;
+  console.log('Authorization header:', authHeader); // Debug log
 
-  if (!authHeader) {
-    return res.status(401).json({ error: 'No token provided' });
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.log('No or invalid Authorization header');
+    return res.status(401).json({ error: 'Access denied, no token provided' });
   }
 
-  const token = authHeader.split(' ')[1]; // "Bearer TOKEN"
-
+  const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // or fetch user details here
+    console.log('Decoded token:', decoded); // Debug log
+    req.user = { _id: decoded.id }; // Set user._id from token payload
     next();
   } catch (err) {
-    if (err.name === 'TokenExpiredError') {
-      return res.status(401).json({ error: 'Token expired' });
-    }
-    return res.status(401).json({ error: 'Invalid token' });
+    console.error('Token verification error:', err.message);
+    res.status(401).json({ error: 'Invalid or expired token' });
   }
 };
 
-
-module.exports = authenticate;  
+module.exports = authenticate;
