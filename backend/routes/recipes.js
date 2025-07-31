@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Recipe = require('../models/Recipe');
+const Comment = require('../models/Comment');
 const multer = require('multer');
 const bodyParser = require('body-parser');
 const authenticate = require('../middleware/auth');
@@ -29,7 +30,6 @@ router.get('/', async (req, res) => {
     const { q, goal } = req.query;
     const query = { status: 'Approved' };
 
-    // Search by title, description, or tags
     if (q) {
       const searchRegex = new RegExp(q, 'i');
       query.$or = [
@@ -38,7 +38,6 @@ router.get('/', async (req, res) => {
       ];
     }
 
-    // Filter by goal (mapped to tags)
     if (goal) {
       const goalToTags = {
         'High Protein': ['high-protein', 'protein'],
@@ -46,11 +45,11 @@ router.get('/', async (req, res) => {
         'Heart Healthy': ['heart-healthy', 'low-fat'],
         'Quick Meals': ['quick-meals', 'under-30-minutes'],
         'Vegan': ['vegan', 'plant-based'],
-        'Comfort Food': ['comfort-food', 'hearty','Comfort Food']
+        'Comfort Food': ['comfort-food', 'hearty', 'Comfort Food']
       };
       const tags = goalToTags[goal];
       if (tags) {
-        query.tags = { $in: tags.map(tag => new RegExp(`^${tag}$`, 'i')) }; // Case-insensitive tag matching
+        query.tags = { $in: tags.map(tag => new RegExp(`^${tag}$`, 'i')) };
       } else {
         console.log('Invalid goal:', goal);
         return res.status(400).json({ message: 'Invalid goal' });
@@ -132,7 +131,6 @@ router.put('/:id', authenticate, upload.single('image'), async (req, res) => {
     const recipe = await Recipe.findById(req.params.id);
     if (!recipe) return res.status(404).json({ message: 'Recipe not found' });
 
-    // Admins can update status; chefs can update their own recipes
     if (req.user.role === 'admin') {
       if (req.body.status) {
         recipe.status = req.body.status;
@@ -212,6 +210,103 @@ router.get('/:id', async (req, res) => {
   } catch (err) {
     console.error('Error fetching recipe:', err.message);
     res.status(500).json({ message: err.message });
+  }
+});
+
+// Create a comment for a recipe
+router.post('/:id/comments', authenticate, async (req, res) => {
+  try {
+    const { comment, rating } = req.body;
+    if (!comment || !rating || rating < 1 || rating > 5) {
+      return res.status(400).json({ message: 'Comment and valid rating (1-5) are required' });
+    }
+    const recipe = await Recipe.findById(req.params.id);
+    if (!recipe) {
+      return res.status(404).json({ message: 'Recipe not found' });
+    }
+    const commentData = {
+      recipeId: req.params.id,
+      userId: req.user._id,
+      comment,
+      rating,
+      likes: [],
+      replies: [],
+    };
+    const newComment = new Comment(commentData);
+    await newComment.save();
+    const populatedComment = await Comment.findById(newComment._id).populate('userId', 'firstname lastname');
+    console.log('Comment saved:', populatedComment);
+    res.status(201).json(populatedComment);
+  } catch (err) {
+    console.error('Error saving comment:', err.message);
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Get all comments for a recipe
+router.get('/:id/comments', async (req, res) => {
+  try {
+    const comments = await Comment.find({ recipeId: req.params.id })
+      .populate('userId', 'firstname lastname')
+      .populate('replies.userId', 'firstname lastname');
+    console.log(`Fetched ${comments.length} comments for recipe ${req.params.id}`);
+    res.json(comments);
+  } catch (err) {
+    console.error('Error fetching comments:', err.message);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Like a comment
+router.post('/comments/:commentId/like', authenticate, async (req, res) => {
+  try {
+    const comment = await Comment.findById(req.params.commentId);
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found' });
+    }
+    const userId = req.user._id;
+    if (comment.likes.includes(userId)) {
+      comment.likes = comment.likes.filter(id => id.toString() !== userId.toString());
+    } else {
+      comment.likes.push(userId);
+    }
+    await comment.save();
+    console.log('Comment like toggled:', comment);
+    const populatedComment = await Comment.findById(req.params.commentId)
+      .populate('userId', 'firstname lastname')
+      .populate('replies.userId', 'firstname lastname');
+    res.json(populatedComment);
+  } catch (err) {
+    console.error('Error liking comment:', err.message);
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Reply to a comment
+router.post('/comments/:commentId/reply', authenticate, async (req, res) => {
+  try {
+    const { reply } = req.body;
+    if (!reply) {
+      return res.status(400).json({ message: 'Reply text is required' });
+    }
+    const comment = await Comment.findById(req.params.commentId);
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found' });
+    }
+    comment.replies.push({
+      userId: req.user._id,
+      comment: reply,
+      date: new Date(),
+    });
+    await comment.save();
+    console.log('Reply added:', comment);
+    const updatedComment = await Comment.findById(req.params.commentId)
+      .populate('userId', 'firstname lastname')
+      .populate('replies.userId', 'firstname lastname');
+    res.json(updatedComment);
+  } catch (err) {
+    console.error('Error adding reply:', err.message);
+    res.status(400).json({ message: err.message });
   }
 });
 

@@ -11,6 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, Clock, Users, ChefHat, Eye, Flame, Book } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { RecipePreview } from '../admin/RecipePreview';
+
 
 const API_URL = 'http://localhost:3000';
 
@@ -19,6 +21,8 @@ export const ChefRecipeManager = () => {
   const [availableTags, setAvailableTags] = useState([]);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState(null);
+  const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -245,6 +249,10 @@ export const ChefRecipeManager = () => {
     const truncated = lines.slice(0, 3).join('\n');
     return lines.length > 3 ? `${truncated}...` : truncated;
   };
+  const handlePreview = (recipe) => {
+    setSelectedRecipe(recipe);
+    setPreviewOpen(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -465,7 +473,7 @@ export const ChefRecipeManager = () => {
                   <Button
                     variant="outline"
                     className="text-black-600 hover:text-grey-700 size-1/3 hover:-translate-y-0.5 transition-all duration-500 cursor-pointer"
-                    onClick={() => handleEditRecipe(recipe)}
+                    onClick={() => handlePreview(recipe)}
                   >
                     <Eye className="h-4 w-4 mr-1 transition-transform duration-500" />
                     View
@@ -491,7 +499,15 @@ export const ChefRecipeManager = () => {
             </Card>
           ))
         )}
+        
       </div>
+      <RecipePreview
+          recipe={selectedRecipe}
+          isOpen={previewOpen}
+          onClose={() => setPreviewOpen(false)}
+          onApprove={() => {}}
+          onReject={() => {}}
+        />
     </div>
   );
 };
