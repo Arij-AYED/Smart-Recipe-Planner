@@ -44,11 +44,7 @@ const MealPlannerCalendar = () => {
         })));
       } catch (error) {
         console.error('Error fetching recipes:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to fetch recipes.',
-          variant: 'destructive',
-        });
+        toast.error('Failed to fetch recipes.');
       }
     };
     fetchRecipes();
@@ -59,21 +55,60 @@ const MealPlannerCalendar = () => {
     const fetchMealPlan = async () => {
       setIsLoading(true);
       try {
-        const startOfWeek = getWeekDates()[0];
+        const startOfWeek = getNormalizedWeekStart(); // Utiliser la fonction normalisée
+        console.log('🔍 Fetching meal plan for week starting:', startOfWeek.toISOString());
+        console.log('🔍 Current week state:', currentWeek);
+        console.log('🔍 Token exists:', !!token);
+        
         const response = await axios.get(`${API_URL}/meal-plans`, {
           headers: { Authorization: `Bearer ${token}` },
           params: { weekStartDate: startOfWeek.toISOString() },
         });
+        
         const fetchedMealPlan = response.data;
+        console.log('📦 Raw response from server:', fetchedMealPlan);
+        console.log('📦 Meals object:', fetchedMealPlan.meals);
+        console.log('📦 Meals object type:', typeof fetchedMealPlan.meals);
+        console.log('📦 Meals object keys:', Object.keys(fetchedMealPlan.meals || {}));
+        
         setMealPlanId(fetchedMealPlan._id);
-        setMealPlan(fetchedMealPlan.meals);
+        
+        // Vérification plus stricte des données meals
+        if (fetchedMealPlan.meals && 
+            typeof fetchedMealPlan.meals === 'object' && 
+            !Array.isArray(fetchedMealPlan.meals)) {
+          
+          console.log('✅ Setting meal plan with fetched data:', fetchedMealPlan.meals);
+          setMealPlan(fetchedMealPlan.meals);
+        } else {
+          console.log('⚠️ No valid meals data, using default structure');
+          const defaultMeals = {
+            Monday: { Breakfast: null, Lunch: null, Dinner: null },
+            Tuesday: { Breakfast: null, Lunch: null, Dinner: null },
+            Wednesday: { Breakfast: null, Lunch: null, Dinner: null },
+            Thursday: { Breakfast: null, Lunch: null, Dinner: null },
+            Friday: { Breakfast: null, Lunch: null, Dinner: null },
+            Saturday: { Breakfast: null, Lunch: null, Dinner: null },
+            Sunday: { Breakfast: null, Lunch: null, Dinner: null },
+          };
+          setMealPlan(defaultMeals);
+        }
       } catch (error) {
-        console.error('Error fetching meal plan:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to fetch meal plan.',
-          variant: 'destructive',
-        });
+        console.error('❌ Error fetching meal plan:', error);
+        console.error('❌ Error response:', error.response?.data);
+        toast.error('Failed to fetch meal plan.');
+        
+        // En cas d'erreur, initialiser avec la structure par défaut
+        const defaultMeals = {
+          Monday: { Breakfast: null, Lunch: null, Dinner: null },
+          Tuesday: { Breakfast: null, Lunch: null, Dinner: null },
+          Wednesday: { Breakfast: null, Lunch: null, Dinner: null },
+          Thursday: { Breakfast: null, Lunch: null, Dinner: null },
+          Friday: { Breakfast: null, Lunch: null, Dinner: null },
+          Saturday: { Breakfast: null, Lunch: null, Dinner: null },
+          Sunday: { Breakfast: null, Lunch: null, Dinner: null },
+        };
+        setMealPlan(defaultMeals);
       } finally {
         setIsLoading(false);
       }
@@ -88,11 +123,25 @@ const MealPlannerCalendar = () => {
     const day = startOfWeek.getDay();
     const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
     startOfWeek.setDate(diff);
+    
+    // Normaliser la date au début de la journée pour éviter les problèmes de fuseaux horaires
+    startOfWeek.setHours(0, 0, 0, 0);
+    
     return days.map((_, index) => {
       const date = new Date(startOfWeek);
       date.setDate(startOfWeek.getDate() + index);
       return date;
     });
+  };
+
+  // Fonction pour obtenir une date normalisée pour la semaine
+  const getNormalizedWeekStart = () => {
+    const startOfWeek = new Date(currentWeek);
+    const day = startOfWeek.getDay();
+    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
+    startOfWeek.setDate(diff);
+    startOfWeek.setHours(0, 0, 0, 0); // Normaliser au début de la journée
+    return startOfWeek;
   };
 
   const weekDates = getWeekDates();
@@ -116,8 +165,31 @@ const MealPlannerCalendar = () => {
     }
   };
 
-  const handleAddMeal = async () => {
-    if (!editingMeal || !selectedMeal.trim()) return;
+  // Fonction pour sauvegarder le meal - SANS form
+  const handleSaveMeal = async () => {
+    console.log('💾 Starting save meal process');
+    console.log('💾 Editing meal:', editingMeal);
+    console.log('💾 Selected meal:', selectedMeal);
+    console.log('💾 Meal plan ID:', mealPlanId);
+    console.log('💾 Current meal plan state:', mealPlan);
+    
+    if (!editingMeal || !selectedMeal.trim()) {
+      toast.error('Please select a day, meal type, and recipe.');
+      return;
+    }
+
+    if (!mealPlanId) {
+      toast.error('No meal plan ID found. Please try refreshing the page.');
+      return;
+    }
+
+    if (!token) {
+      toast.error('You are not logged in. Redirecting to login...');
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 2000);
+      return;
+    }
 
     const updatedMealPlan = {
       ...mealPlan,
@@ -127,29 +199,53 @@ const MealPlannerCalendar = () => {
       },
     };
 
-    setMealPlan(updatedMealPlan);
+    console.log('💾 Updated meal plan to send:', updatedMealPlan);
 
     try {
-      await axios.put(
+      setIsLoading(true);
+      const response = await axios.put(
         `${API_URL}/meal-plans/${mealPlanId}`,
         { meals: updatedMealPlan },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast({
-        title: 'Success',
-        description: 'Meal plan updated.',
-      });
-    } catch (error) {
-      console.error('Error updating meal plan:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update meal plan.',
-        variant: 'destructive',
-      });
+      
+      console.log('💾 Server response after save:', response.data);
+      
+      // Mise à jour de l'état local
+      setMealPlan(updatedMealPlan);
+      setEditingMeal(null);
+      setSelectedMeal('');
+      
+      toast.success('Meal plan updated successfully!');
+    } catch (error: any) {
+      console.error('❌ Error updating meal plan:', error);
+      console.error('❌ Error response:', error.response?.data);
+      let errorMessage = 'Failed to update meal plan.';
+      
+      if (error.response) {
+        if (error.response.status === 404) {
+          errorMessage = 'Meal plan not found. Please try refreshing.';
+        } else if (error.response.status === 403) {
+          errorMessage = 'Unauthorized. Please log in again.';
+          setTimeout(() => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+          }, 2000);
+        } else if (error.response.status === 401) {
+          errorMessage = 'Session expired. Redirecting to login...';
+          setTimeout(() => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+          }, 2000);
+        }
+      }
+      
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
-
-    setEditingMeal(null);
-    setSelectedMeal('');
   };
 
   const handleDeleteMeal = async (day: string, mealType: string) => {
@@ -169,17 +265,10 @@ const MealPlannerCalendar = () => {
         { meals: updatedMealPlan },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast({
-        title: 'Success',
-        description: 'Meal removed.',
-      });
+      toast.success('Meal removed successfully!');
     } catch (error) {
       console.error('Error updating meal plan:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to remove meal.',
-        variant: 'destructive',
-      });
+      toast.error('Failed to remove meal.');
     }
 
     if (editingMeal?.day === day && editingMeal?.mealType === mealType) {
@@ -290,15 +379,20 @@ const MealPlannerCalendar = () => {
                       <div className="flex justify-end space-x-2">
                         <Button
                           size="sm"
-                          onClick={handleAddMeal}
-                          className="bg-green-500 text-white"
+                          className="bg-green-500 text-white hover:bg-green-600"
+                          onClick={handleSaveMeal}
+                          disabled={isLoading}
                         >
-                          Save
+                          {isLoading ? 'Saving...' : 'Save'}
                         </Button>
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => setEditingMeal(null)}
+                          onClick={() => {
+                            setEditingMeal(null);
+                            setSelectedMeal('');
+                          }}
+                          disabled={isLoading}
                         >
                           Cancel
                         </Button>
@@ -331,10 +425,12 @@ const MealPlannerCalendar = () => {
                           </button>
                           <button
                             className="ml-2 text-green-500 hover:text-green-700"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setEditingMeal({ day, mealType });
                               setSelectedMeal(mealPlan[day][mealType] || '');
                             }}
+                            title="Edit Meal"
                           >
                             <PenLine className="w-4 h-4" />
                           </button>
