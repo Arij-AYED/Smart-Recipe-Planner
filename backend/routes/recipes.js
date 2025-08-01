@@ -100,6 +100,13 @@ router.post('/', authenticate, upload.single('image'), async (req, res) => {
     console.error('No user ID found in request');
     return res.status(401).json({ message: 'Unauthorized: No user ID found' });
   }
+  //check if the user is a chef and active
+  if (req.user.role==='chef'){
+    if(!req.user.isChefActive){
+      console.log('Inactive chef tried to create a recipe:',req.user._id);
+      return res.status(403).json({message: 'Your chef account is not actiavted yet.'});
+    }
+  }
   const recipeData = {
     title: req.body.title,
     description: req.body.description,

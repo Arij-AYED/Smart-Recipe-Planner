@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ChefRecipeManager } from '@/components/chef/ChefRecipeManager';
 import { ChefFeedback } from '@/components/chef/ChefFeedback';
 import { ChefHat, FileText, MessageSquare } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const ChefDashboard = () => {
   return (
@@ -39,6 +40,11 @@ const ChefDashboard = () => {
           </TabsContent>
         </Tabs>
       </div>
+      <div className="mt-6 text-center">
+          <Link to="/" className="text-sm text-gray-600 hover:text-gray-800">
+            ← Back to Home
+          </Link>
+        </div>
     </div>
   );
 };

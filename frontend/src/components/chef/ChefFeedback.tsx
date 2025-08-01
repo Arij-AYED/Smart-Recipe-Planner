@@ -20,12 +20,12 @@ export const ChefFeedback = () => {
     const fetchFeedback = async () => {
       try {
         setIsLoading(true);
-        const response = await axios.get(`${API_URL}/recipes/my-recipes`, {
+        const response = await axios.get(`${API_URL}/api/recipes/my-recipes`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const recipes = response.data;
         const commentPromises = recipes.map((recipe) =>
-          axios.get(`${API_URL}/recipes/${recipe._id}/comments`)
+          axios.get(`${API_URL}/api/recipes/${recipe._id}/comments`)
         );
         const commentResponses = await Promise.all(commentPromises);
         const allComments = commentResponses.flatMap((res, index) =>

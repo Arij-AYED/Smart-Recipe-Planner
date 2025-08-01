@@ -28,8 +28,8 @@ const RecipeDetails = () => {
       try {
         setIsLoading(true);
         const [recipeResponse, commentsResponse] = await Promise.all([
-          axios.get(`${API_URL}/recipes/${id}`),
-          axios.get(`${API_URL}/recipes/${id}/comments`)
+          axios.get(`${API_URL}/api/recipes/${id}`),
+          axios.get(`${API_URL}/api/recipes/${id}/comments`)
         ]);
         setRecipe(recipeResponse.data);
         setComments(commentsResponse.data);
@@ -58,7 +58,7 @@ const RecipeDetails = () => {
     }
     try {
       const response = await axios.post(
-        `${API_URL}/recipes/${id}/comments`,
+        `${API_URL}/api/recipes/${id}/comments`,
         { comment: newComment, rating },
         { headers: { Authorization: `Bearer ${token}` } }
       );

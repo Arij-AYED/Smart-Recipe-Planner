@@ -26,7 +26,7 @@ export const AdminRecipeManager = () => {
           navigate('/login');
           return;
         }
-        const response = await axios.get(`${API_URL}/recipes/all`, {
+        const response = await axios.get(`${API_URL}/api/recipes/all`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setRecipes(response.data);
@@ -57,10 +57,10 @@ export const AdminRecipeManager = () => {
         navigate('/login');
         return;
       }
-      await axios.put(`${API_URL}/recipes/${id}`, { status: 'Approved' }, {
+      await axios.put(`${API_URL}/api/recipes/${id}`, { status: 'Approved' }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      const response = await axios.get(`${API_URL}/recipes/all`, {
+      const response = await axios.get(`${API_URL}/api/recipes/all`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setRecipes(response.data);
@@ -86,10 +86,10 @@ export const AdminRecipeManager = () => {
         navigate('/login');
         return;
       }
-      await axios.put(`${API_URL}/recipes/${id}`, { status: 'Rejected' }, {
+      await axios.put(`${API_URL}/api/recipes/${id}`, { status: 'Rejected' }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      const response = await axios.get(`${API_URL}/recipes/all`, {
+      const response = await axios.get(`${API_URL}/api/recipes/all`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setRecipes(response.data);
