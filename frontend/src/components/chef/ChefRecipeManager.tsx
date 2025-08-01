@@ -13,6 +13,23 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { RecipePreview } from '../admin/RecipePreview';
 
+import baking_powder from "../../assets/baking_powder.png"
+import bread from "../../assets/bread.png"
+import butter from "../../assets/butter.png"
+import cheese from "../../assets/cheese.png"
+import chicken_breast from "../../assets/chicken_breast.png"
+import chocolate from "../../assets/chocolate.png"
+import eggs from "../../assets/eggs.png"
+import flour from "../../assets/flour.png"
+import lettuce from "../../assets/lettuce.png"
+import milk from "../../assets/milk.png"
+import olive_oil from "../../assets/olive_oil.png"
+import rice from "../../assets/rice.png"
+import salt from "../../assets/salt.png"
+import sugar from "../../assets/sugar.png"
+import tomato from "../../assets/tomato.png"
+import vanilla from "../../assets/vanilla.png"
+
 
 const API_URL = 'http://localhost:3000';
 
@@ -29,14 +46,37 @@ export const ChefRecipeManager = () => {
     cookTime: '',
     servings: '',
     difficulty: '',
-    ingredients: '',
+    ingredients: [], // Changed to array of { name, quantity, unit }
     instructions: '',
     image: null,
     tags: [],
     calories: '',
     newTag: '',
+    selectedIngredient: '', // For the current ingredient being added
+    quantity: '', // For the quantity input
   });
   const navigate = useNavigate();
+
+  // Predefined ingredient list with units and images
+  const ingredientOptions = [
+  { name: 'Chicken Breast', unit: 'grams', image: chicken_breast },
+  { name: 'Olive Oil', unit: 'ml', image: olive_oil },
+  { name: 'Tomatoes', unit: '', image: tomato },
+  { name: 'Rice', unit: 'grams', image: rice },
+  { name: 'Eggs', unit: '', image: eggs },
+  { name: 'Milk', unit: 'ml', image: milk },
+  { name: 'Cheese', unit: 'grams', image: cheese },
+  { name: 'Butter', unit: 'grams', image: butter },
+  { name: 'Flour', unit: 'grams', image: flour },
+  { name: 'Sugar', unit: 'grams', image: sugar },
+  { name: 'Salt', unit: 'grams', image: salt },
+  { name: 'Chocolate', unit: 'grams', image: chocolate },
+  { name: 'Lettuce', unit: 'pieces', image: lettuce },
+  { name: 'Vanilla Sugar', unit: 'units', image: vanilla },
+  { name: 'Baking Powder', unit: 'grams', image: baking_powder },
+  { name: 'Bread', unit: 'pieces', image: bread },
+
+];
 
   // Fetch user's recipes and available tags from backend
   useEffect(() => {
@@ -44,7 +84,7 @@ export const ChefRecipeManager = () => {
       try {
         const token = localStorage.getItem('token');
         const user = JSON.parse(localStorage.getItem('user') || '{}');
-        console.log('User role:', user.role); // Debug log
+        console.log('User role:', user.role);
         if (!token) {
           toast.error('Please log in to view your recipes');
           navigate('/login');
@@ -57,7 +97,7 @@ export const ChefRecipeManager = () => {
           }),
           axios.get(`${API_URL}/api/recipes/tags`)
         ]);
-        console.log('User recipes response:', recipesResponse.data); // Debug log
+        console.log('User recipes response:', recipesResponse.data);
         console.log('Tags response:', tagsResponse.data);
         setRecipes(recipesResponse.data);
         setAvailableTags(tagsResponse.data);
@@ -83,7 +123,8 @@ export const ChefRecipeManager = () => {
     dataToSend.append('cookTime', formData.cookTime);
     dataToSend.append('servings', formData.servings);
     dataToSend.append('difficulty', formData.difficulty);
-    dataToSend.append('ingredients', formData.ingredients);
+    // Convert ingredients array to newline-separated string
+    dataToSend.append('ingredients', formData.ingredients.map(ing => `${ing.quantity} ${ing.unit} ${ing.name}`).join('\n'));
     dataToSend.append('instructions', formData.instructions);
     if (formData.image) {
       dataToSend.append('image', formData.image);
@@ -132,12 +173,14 @@ export const ChefRecipeManager = () => {
         cookTime: '',
         servings: '',
         difficulty: '',
-        ingredients: '',
+        ingredients: [],
         instructions: '',
         image: null,
         tags: [],
         calories: '',
         newTag: '',
+        selectedIngredient: '',
+        quantity: '',
       });
       setEditingRecipe(null);
       setIsCreateOpen(false);
@@ -186,17 +229,22 @@ export const ChefRecipeManager = () => {
   const handleEditRecipe = (recipe) => {
     setEditingRecipe(recipe);
     setFormData({
-      title: recipe.title,
-      description: recipe.description,
-      cookTime: recipe.cookTime,
-      servings: recipe.servings.toString(),
-      difficulty: recipe.difficulty,
-      ingredients: recipe.ingredients,
-      instructions: recipe.instructions,
+      title: recipe.title || '',
+      description: recipe.description || '',
+      cookTime: recipe.cookTime || '',
+      servings: recipe.servings?.toString() || '',
+      difficulty: recipe.difficulty || '',
+      ingredients: recipe.ingredients ? recipe.ingredients.split('\n').map(line => {
+        const [quantity, unit, name] = line.trim().split(' ', 3);
+        return { quantity: parseInt(quantity) || '', unit, name };
+      }) : [],
+      instructions: recipe.instructions || '',
       image: null,
       tags: recipe.tags || [],
       calories: recipe.calories ? recipe.calories.toString() : '',
       newTag: '',
+      selectedIngredient: '',
+      quantity: '',
     });
     setIsCreateOpen(true);
   };
@@ -242,13 +290,44 @@ export const ChefRecipeManager = () => {
     }
   };
 
-  // Function to truncate description to 3 lines
+  // Handle adding an ingredient
+  const handleAddIngredient = () => {
+    if (formData.selectedIngredient && formData.quantity) {
+      const selected = ingredientOptions.find(ing => ing.name === formData.selectedIngredient);
+      if (selected) {
+        setFormData(prev => ({
+          ...prev,
+          ingredients: [
+            ...prev.ingredients,
+            {
+              name: selected.name,
+              quantity: parseInt(formData.quantity) || 1,
+              unit: selected.unit,
+            },
+          ],
+          selectedIngredient: '',
+          quantity: '',
+        }));
+      }
+    }
+  };
+
+  // Remove an ingredient
+  const removeIngredient = (indexToRemove) => {
+    setFormData(prev => ({
+      ...prev,
+      ingredients: prev.ingredients.filter((_, index) => index !== indexToRemove),
+    }));
+  };
+
+  // Truncate description to 3 lines
   const truncateDescription = (description) => {
-    if (!description) return '';
-    const lines = description.split('\n');
+    if (!description) return 'No description available';
+    const lines = description.split('\n').filter(line => line.trim());
     const truncated = lines.slice(0, 3).join('\n');
     return lines.length > 3 ? `${truncated}...` : truncated;
   };
+
   const handlePreview = (recipe) => {
     setSelectedRecipe(recipe);
     setPreviewOpen(true);
@@ -330,13 +409,54 @@ export const ChefRecipeManager = () => {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="ingredients">Ingredients</Label>
-                <Textarea
-                  id="ingredients"
-                  value={formData.ingredients}
-                  onChange={(e) => setFormData({ ...formData, ingredients: e.target.value })}
-                  placeholder="List ingredients (one per line)"
-                  rows={5}
-                />
+                <div className="flex gap-2 mb-2">
+                  <Select
+                    value={formData.selectedIngredient}
+                    onValueChange={(value) => setFormData({ ...formData, selectedIngredient: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select an ingredient" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ingredientOptions.map((ing) => (
+                        <SelectItem key={ing.name} value={ing.name}>
+                          <div className="flex items-center gap-2">
+                            <img src={ing.image} alt={ing.name} className="w-6 h-6 rounded-full" />
+                            {ing.name} ({ing.unit})
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type="number"
+                    value={formData.quantity}
+                    onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                    placeholder="Quantity"
+                    className="w-20"
+                  />
+                  <Button onClick={handleAddIngredient} className="bg-orange-500 hover:bg-orange-600">
+                    <Plus className="h-4 w-4 mr-1" /> Add
+                  </Button>
+                </div>
+                {formData.ingredients.length > 0 && (
+                  <ul className="space-y-2">
+                    {formData.ingredients.map((ing, index) => (
+                      <li key={index} className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+                        <span>{ing.quantity} {ing.unit} {ing.name}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeIngredient(index)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="instructions">Instructions</Label>
@@ -441,7 +561,7 @@ export const ChefRecipeManager = () => {
               </div>
               <CardHeader>
                 <CardTitle className="text-lg">{recipe.title}</CardTitle>
-                <CardDescription>{truncateDescription(recipe.description)}</CardDescription>
+                <CardDescription className="line-clamp-3">{truncateDescription(recipe.description)}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
@@ -472,7 +592,7 @@ export const ChefRecipeManager = () => {
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
-                    className="text-black-600 hover:text-grey-700 size-1/3 hover:-translate-y-0.5 transition-all duration-500 cursor-pointer"
+                    className="text-black-300 hover:text-black-700 flex-1 hover:-translate-y-0.5 transition-all duration-500 cursor-pointer"
                     onClick={() => handlePreview(recipe)}
                   >
                     <Eye className="h-4 w-4 mr-1 transition-transform duration-500" />
@@ -480,7 +600,7 @@ export const ChefRecipeManager = () => {
                   </Button>
                   <Button
                     variant="outline"
-                    className="text-blue-600 hover:text-blue-700 size-1/3 hover:-translate-y-0.5 transition-all duration-500 cursor-pointer"
+                    className="text-blue-600 hover:text-blue-700 flex-1 hover:-translate-y-0.5 transition-all duration-500 cursor-pointer"
                     onClick={() => handleEditRecipe(recipe)}
                   >
                     <Edit className="h-4 w-4 mr-1 transition-transform duration-500" />
@@ -489,7 +609,7 @@ export const ChefRecipeManager = () => {
                   <Button
                     variant="outline"
                     onClick={() => handleDeleteRecipe(recipe._id)}
-                    className="text-red-600 hover:text-red-700 size-1/3 hover:-translate-y-0.5 transition-all duration-500 cursor-pointer"
+                    className="text-red-600 hover:text-red-700 flex-1 hover:-translate-y-0.5 transition-all duration-500 cursor-pointer"
                   >
                     <Trash2 className="h-4 w-4 mr-1 transition-transform duration-500" />
                     Delete
@@ -499,15 +619,14 @@ export const ChefRecipeManager = () => {
             </Card>
           ))
         )}
-        
       </div>
       <RecipePreview
-          recipe={selectedRecipe}
-          isOpen={previewOpen}
-          onClose={() => setPreviewOpen(false)}
-          onApprove={() => {}}
-          onReject={() => {}}
-        />
+        recipe={selectedRecipe}
+        isOpen={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        onApprove={() => {}}
+        onReject={() => {}}
+      />
     </div>
   );
 };

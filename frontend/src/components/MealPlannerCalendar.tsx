@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Trash2, PenLine } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Trash2, PenLine, ShoppingCart } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -24,6 +25,8 @@ const MealPlannerCalendar = () => {
   const [mealPlanId, setMealPlanId] = useState<string | null>(null);
   const [availableRecipes, setAvailableRecipes] = useState<{ _id: string; title: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [shoppingList, setShoppingList] = useState<{ name: string; quantity: number; unit: string }[]>([]);
+  const [isShoppingListOpen, setIsShoppingListOpen] = useState(false);
 
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const mealTypes = ['Breakfast', 'Lunch', 'Dinner'];
@@ -47,7 +50,9 @@ const MealPlannerCalendar = () => {
         toast.error('Failed to fetch recipes.');
       }
     };
-    fetchRecipes();
+    if (token) {
+      fetchRecipes();
+    }
   }, [token]);
 
   // Fetch meal plan for the current week
@@ -55,7 +60,7 @@ const MealPlannerCalendar = () => {
     const fetchMealPlan = async () => {
       setIsLoading(true);
       try {
-        const startOfWeek = getNormalizedWeekStart(); // Utiliser la fonction normalisée
+        const startOfWeek = getNormalizedWeekStart();
         console.log('🔍 Fetching meal plan for week starting:', startOfWeek.toISOString());
         console.log('🔍 Current week state:', currentWeek);
         console.log('🔍 Token exists:', !!token);
@@ -73,16 +78,12 @@ const MealPlannerCalendar = () => {
         
         setMealPlanId(fetchedMealPlan._id);
         
-        // Vérification plus stricte des données meals
-        if (fetchedMealPlan.meals && 
-            typeof fetchedMealPlan.meals === 'object' && 
-            !Array.isArray(fetchedMealPlan.meals)) {
-          
+        if (fetchedMealPlan.meals && typeof fetchedMealPlan.meals === 'object' && !Array.isArray(fetchedMealPlan.meals)) {
           console.log('✅ Setting meal plan with fetched data:', fetchedMealPlan.meals);
           setMealPlan(fetchedMealPlan.meals);
         } else {
           console.log('⚠️ No valid meals data, using default structure');
-          const defaultMeals = {
+          setMealPlan({
             Monday: { Breakfast: null, Lunch: null, Dinner: null },
             Tuesday: { Breakfast: null, Lunch: null, Dinner: null },
             Wednesday: { Breakfast: null, Lunch: null, Dinner: null },
@@ -90,16 +91,13 @@ const MealPlannerCalendar = () => {
             Friday: { Breakfast: null, Lunch: null, Dinner: null },
             Saturday: { Breakfast: null, Lunch: null, Dinner: null },
             Sunday: { Breakfast: null, Lunch: null, Dinner: null },
-          };
-          setMealPlan(defaultMeals);
+          });
         }
       } catch (error) {
         console.error('❌ Error fetching meal plan:', error);
         console.error('❌ Error response:', error.response?.data);
         toast.error('Failed to fetch meal plan.');
-        
-        // En cas d'erreur, initialiser avec la structure par défaut
-        const defaultMeals = {
+        setMealPlan({
           Monday: { Breakfast: null, Lunch: null, Dinner: null },
           Tuesday: { Breakfast: null, Lunch: null, Dinner: null },
           Wednesday: { Breakfast: null, Lunch: null, Dinner: null },
@@ -107,8 +105,7 @@ const MealPlannerCalendar = () => {
           Friday: { Breakfast: null, Lunch: null, Dinner: null },
           Saturday: { Breakfast: null, Lunch: null, Dinner: null },
           Sunday: { Breakfast: null, Lunch: null, Dinner: null },
-        };
-        setMealPlan(defaultMeals);
+        });
       } finally {
         setIsLoading(false);
       }
@@ -123,10 +120,7 @@ const MealPlannerCalendar = () => {
     const day = startOfWeek.getDay();
     const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
     startOfWeek.setDate(diff);
-    
-    // Normaliser la date au début de la journée pour éviter les problèmes de fuseaux horaires
     startOfWeek.setHours(0, 0, 0, 0);
-    
     return days.map((_, index) => {
       const date = new Date(startOfWeek);
       date.setDate(startOfWeek.getDate() + index);
@@ -134,13 +128,12 @@ const MealPlannerCalendar = () => {
     });
   };
 
-  // Fonction pour obtenir une date normalisée pour la semaine
   const getNormalizedWeekStart = () => {
     const startOfWeek = new Date(currentWeek);
     const day = startOfWeek.getDay();
     const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
     startOfWeek.setDate(diff);
-    startOfWeek.setHours(0, 0, 0, 0); // Normaliser au début de la journée
+    startOfWeek.setHours(0, 0, 0, 0);
     return startOfWeek;
   };
 
@@ -165,7 +158,6 @@ const MealPlannerCalendar = () => {
     }
   };
 
-  // Fonction pour sauvegarder le meal - SANS form
   const handleSaveMeal = async () => {
     console.log('💾 Starting save meal process');
     console.log('💾 Editing meal:', editingMeal);
@@ -211,7 +203,6 @@ const MealPlannerCalendar = () => {
       
       console.log('💾 Server response after save:', response.data);
       
-      // Mise à jour de l'état local
       setMealPlan(updatedMealPlan);
       setEditingMeal(null);
       setSelectedMeal('');
@@ -276,6 +267,84 @@ const MealPlannerCalendar = () => {
     }
   };
 
+  const handleGenerateShoppingList = async () => {
+    if (!token) {
+      toast.error('You are not logged in. Redirecting to login...');
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 2000);
+      return;
+    }
+
+    // Collect all recipe IDs from the meal plan with their frequencies
+    const recipeFrequencies = Object.values(mealPlan)
+      .flatMap(day => Object.values(day))
+      .filter(id => id !== null) as string[];
+    const frequencyMap = recipeFrequencies.reduce((acc, id) => {
+      acc[id] = (acc[id] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    if (Object.keys(frequencyMap).length === 0) {
+      toast.error('No meals planned for this week.');
+      setShoppingList([]);
+      setIsShoppingListOpen(true);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      // Fetch recipes for the meal plan
+      const response = await axios.post(`${API_URL}/recipes/bulk`, { recipeIds: Object.keys(frequencyMap) }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      // Parse and aggregate ingredients with frequency adjustment
+      const allIngredients = response.data.flatMap((recipe: any) =>
+        recipe.ingredients
+          ? recipe.ingredients.split('\n').map((ing: string) => {
+              const parts = ing.trim().split(/\s+/);
+              let quantity = parseInt(parts[0], 10) || 1;
+              let unit = parts[1] || '';
+              let name = parts.slice(2).join(' ');
+              return { name, quantity: quantity * (frequencyMap[recipe._id] || 1), unit };
+            })
+          : []
+      );
+
+      // Aggregate ingredients by name
+      const ingredientTotals = allIngredients.reduce((acc, ing) => {
+        const existing = acc.find(item => item.name.toLowerCase() === ing.name.toLowerCase());
+        if (existing) {
+          existing.quantity += ing.quantity;
+        } else {
+          acc.push({ ...ing });
+        }
+        return acc;
+      }, [] as { name: string; quantity: number; unit: string }[]);
+
+      // Get available ingredients from localStorage
+      const availableIngredients = JSON.parse(localStorage.getItem('availableIngredients') || '[]')
+        .map((ing: string) => ing.toLowerCase());
+
+      // Filter out available ingredients to get the shopping list
+      const missingIngredients = ingredientTotals.filter(ing =>
+        !availableIngredients.some(avail =>
+          ing.name.toLowerCase().includes(avail) || avail.includes(ing.name.toLowerCase())
+        )
+      );
+
+      console.log('Shopping list:', missingIngredients);
+      setShoppingList(missingIngredients);
+      setIsShoppingListOpen(true);
+    } catch (error: any) {
+      console.error('Error generating shopping list:', error);
+      toast.error(error.response?.data?.message || 'Failed to generate shopping list.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const totalPlannedMeals = Object.values(mealPlan).reduce((total, day) => {
     return total + Object.values(day).filter(meal => meal !== null).length;
   }, 0);
@@ -319,6 +388,14 @@ const MealPlannerCalendar = () => {
                 className="bg-white/20 hover:bg-white/30 text-white border-0"
               >
                 <ChevronRight className="w-4 h-4" />
+              </Button>
+              <Button 
+                className="bg-white text-orange-600 hover:bg-gray-50"
+                onClick={handleGenerateShoppingList}
+                disabled={isLoading}
+              >
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                {isLoading ? 'Generating...' : 'Generate Shopping List'}
               </Button>
             </div>
           </div>
@@ -454,6 +531,40 @@ const MealPlannerCalendar = () => {
           </Card>
         ))}
       </div>
+
+      {/* Shopping List Dialog */}
+      <Dialog open={isShoppingListOpen} onOpenChange={setIsShoppingListOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Shopping List</DialogTitle>
+            <DialogDescription>
+              Ingredients needed for your meal plan this week
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {shoppingList.length === 0 ? (
+              <p className="text-gray-600 text-center">No ingredients needed. Either no meals are planned or you have all required ingredients.</p>
+            ) : (
+              <ul className="space-y-2">
+                {shoppingList.map((ingredient, index) => (
+                  <li key={index} className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+                    <span>{ingredient.quantity} {ingredient.unit} {ingredient.name}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div className="flex justify-end mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setIsShoppingListOpen(false)}
+            >
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
