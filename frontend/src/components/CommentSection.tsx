@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-const API_URL = 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_BASE_URL;
 
 const [newCommentRating, setNewCommentRating] = useState(0);API_URL
 

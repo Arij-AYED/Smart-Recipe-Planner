@@ -8,7 +8,7 @@ import { RecipePreview } from './RecipePreview';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
-const API_URL = 'http://localhost:3000'; // Matches backend port
+const API_URL = import.meta.env.VITE_BASE_URL; // Matches backend port
 
 export const AdminRecipeManager = () => {
   const [recipes, setRecipes] = useState([]);

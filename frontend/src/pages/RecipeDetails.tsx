@@ -25,7 +25,7 @@ import sugar from "../assets/sugar.png";
 import tomato from "../assets/tomato.png";
 import vanilla from "../assets/vanilla.png";
 
-const API_URL = 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_BASE_URL;
 
 const RecipeDetails = () => {
   const { id } = useParams();

@@ -8,7 +8,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import RecipeCard from './RecipeCard';
 
-const API_URL = 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_BASE_URL;
 
 const IngredientSearch = () => {
   const [ingredients, setIngredients] = useState<string[]>(JSON.parse(localStorage.getItem('availableIngredients') || '[]'));

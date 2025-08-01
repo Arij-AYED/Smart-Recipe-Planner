@@ -20,7 +20,7 @@ const Login = () => {
     setIsLoading(true);
 
    try {
-  const response = await axios.post('http://localhost:3000/api/login', { email, password });
+  const response = await axios.post(import.meta.env.VITE_BASE_URL+'/api/login', { email, password });
   localStorage.setItem("user", JSON.stringify(response.data.user));
   localStorage.setItem("token", response.data.token);
   window.location.href='/';

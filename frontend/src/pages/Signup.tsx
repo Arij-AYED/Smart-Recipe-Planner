@@ -61,7 +61,7 @@ const Signup = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:3000/api/register', form, {
+      const response = await axios.post(import.meta.env.VITE_BASE_URL+'/api/register', form, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

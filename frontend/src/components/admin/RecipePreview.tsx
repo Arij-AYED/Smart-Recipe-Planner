@@ -29,7 +29,7 @@ interface RecipePreviewProps {
   onReject: (id: string) => void;
 }
 
-const API_URL = 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_BASE_URL;
 
 export const RecipePreview: React.FC<RecipePreviewProps> = ({
   recipe,

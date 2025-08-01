@@ -25,7 +25,7 @@ export const AdminUserManager = () => {
  // AdminUserManager.tsx
  const fetchUsers = async () => {
     try {
-      const res = await axios.get('http://localhost:3000/api/users', {
+      const res = await axios.get(import.meta.env.VITE_BASE_URL+'/api/users', {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
@@ -57,7 +57,7 @@ const handleUserStatusChange = async (userId: string, newStatus: User['status'],
     const isBanned = newStatus === 'banned';
     const isChefActive = newStatus === 'active' && role === 'chef';
     const res=await axios.put(
-      `http://localhost:3000/api/users/${userId}/ban`,
+      import.meta.env.VITE_BASE_URL+`/api/users/${userId}/ban`,
       { isBanned , isChefActive },
       {
         headers: {
@@ -81,7 +81,7 @@ const handleUserStatusChange = async (userId: string, newStatus: User['status'],
 const handlePromoteToAdmin = async (userId: string ) => {
   try {
     const res = await axios.put(
-      `http://localhost:3000/api/users/${userId}/promote`,
+      import.meta.env.VITE_BASE_URL+`/api/users/${userId}/promote`,
       {},
       {
         headers: {

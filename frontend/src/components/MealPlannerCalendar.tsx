@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 
-const API_URL = 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_BASE_URL;
 
 const MealPlannerCalendar = () => {
   const [currentWeek, setCurrentWeek] = useState(new Date());

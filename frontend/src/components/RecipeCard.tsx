@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-const API_URL = 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_BASE_URL;
 import axios from 'axios';
 import aiPic from '@/assets/aiPic.png'; // adjust path accordingly
 

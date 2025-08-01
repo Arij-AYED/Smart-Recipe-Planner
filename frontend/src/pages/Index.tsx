@@ -12,7 +12,7 @@ import IngredientSearch from '@/components/IngredientSearch';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 
-const API_URL = 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_BASE_URL;
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
