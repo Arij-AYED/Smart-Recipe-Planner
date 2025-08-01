@@ -93,7 +93,7 @@ const Index = () => {
     setSearchQuery('');
     setSubmittedSearchQuery('');
     setSelectedGoal(null);
-    document.getElementById('search-input').value = '';
+    (document.getElementById('search-input') as any).value = '';
   };
 
   return (

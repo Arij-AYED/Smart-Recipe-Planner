@@ -7,6 +7,8 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 const API_URL = 'http://localhost:3000';
 import axios from 'axios';
+import aiPic from '@/assets/aiPic.png'; // adjust path accordingly
+
 
 
 interface Recipe {
@@ -74,10 +76,11 @@ const RecipeCard = ({ recipe,user }: RecipeCardProps) => {
     <Card className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-0 bg-white/80 backdrop-blur-sm overflow-hidden">
       <div className="relative">
         <img
-          src={`${API_URL}${recipe.image || '/placeholder.svg'}`}
-          alt={recipe.title}
-          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-        />
+  src={recipe.isAI ? aiPic : `${API_URL}${recipe.image || '/placeholder.svg'}`}
+  alt={recipe.title}
+  className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+/>
+
         <div className="absolute top-3 right-3 flex space-x-2">
           <Button
             size="sm"
@@ -130,15 +133,26 @@ const RecipeCard = ({ recipe,user }: RecipeCardProps) => {
           )}
         </div>
 
-        <div className="pt-2">
-          <Link to={`/recipe/${recipe._id}`}>
-            <Button 
-              className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white"
-            >
-              View Recipe
-            </Button>
-          </Link>
-        </div>
+       <div className="pt-2">
+  {recipe._id ? (
+    <Link to={`/recipe/${recipe._id}`}>
+      <Button 
+        className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white"
+      >
+        View Recipe
+      </Button>
+    </Link>
+  ) : (
+    <Button 
+      disabled
+      className="w-full bg-gray-300 text-gray-600 cursor-not-allowed"
+      title="AI preview only – recipe details unavailable"
+    >
+      Preview Only
+    </Button>
+  )}
+</div>
+
       </CardContent>
     </Card>
   );

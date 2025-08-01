@@ -107,7 +107,7 @@ const [suggestedRecipes, setSuggestedRecipes] = useState<any[]>([]);
       const response = await axios.post('http://localhost:3000/api/ai-recipes', {
         ingredients,
       });
-      //setSuggestedRecipes(response.data.recipe || []);
+      setSuggestedRecipes(response.data);
   }catch ( error) {
     console.error('Error fetching Ai suggestions:',error);
     toast.error('Failed to fetch AI suggestions');
