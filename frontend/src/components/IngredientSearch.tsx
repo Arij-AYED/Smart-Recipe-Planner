@@ -46,7 +46,7 @@ const [suggestedRecipes, setSuggestedRecipes] = useState<any[]>([]);
       setLoading(true);
       setError(null);
       try {
-        const response = await axios.get(`${API_URL}/recipes/by-ingredients`, {
+        const response = await axios.get(`${API_URL}/api/recipes/by-ingredients`, {
           params: { ingredients: ingredients.join(',') }
         });
         console.log('Fetched recipes:', response.data);

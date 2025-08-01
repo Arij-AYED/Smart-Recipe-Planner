@@ -65,7 +65,7 @@ const MealPlannerCalendar = () => {
         console.log('🔍 Current week state:', currentWeek);
         console.log('🔍 Token exists:', !!token);
         
-        const response = await axios.get(`${API_URL}/meal-plans`, {
+        const response = await axios.get(`${API_URL}/api/meal-plans`, {
           headers: { Authorization: `Bearer ${token}` },
           params: { weekStartDate: startOfWeek.toISOString() },
         });
@@ -196,7 +196,7 @@ const MealPlannerCalendar = () => {
     try {
       setIsLoading(true);
       const response = await axios.put(
-        `${API_URL}/meal-plans/${mealPlanId}`,
+        `${API_URL}/api/meal-plans/${mealPlanId}`,
         { meals: updatedMealPlan },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -252,7 +252,7 @@ const MealPlannerCalendar = () => {
 
     try {
       await axios.put(
-        `${API_URL}/meal-plans/${mealPlanId}`,
+        `${API_URL}/api/meal-plans/${mealPlanId}`,
         { meals: updatedMealPlan },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -295,7 +295,7 @@ const MealPlannerCalendar = () => {
     try {
       setIsLoading(true);
       // Fetch recipes for the meal plan
-      const response = await axios.post(`${API_URL}/recipes/bulk`, { recipeIds: Object.keys(frequencyMap) }, {
+      const response = await axios.post(`${API_URL}/api/recipes/bulk`, { recipeIds: Object.keys(frequencyMap) }, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

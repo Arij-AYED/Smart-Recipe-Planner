@@ -42,6 +42,7 @@ app.use('/api/recipes', recipeRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/meal-plans', mealPlanRoutes);
 //app.use('/api/comments', commentRoutes);
+app.use('/api', authRoutes);
 
 app.use(express.json());
 
