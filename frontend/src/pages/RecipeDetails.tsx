@@ -8,6 +8,23 @@ import { Textarea } from '@/components/ui/textarea';
 import { Clock, Users, ChefHat, ArrowLeft, Star, ThumbsUp, Reply } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 
+import baking_powder from "../assets/baking_powder.png";
+import bread from "../assets/bread.png";
+import butter from "../assets/butter.png";
+import cheese from "../assets/cheese.png";
+import chicken_breast from "../assets/chicken_breast.png";
+import chocolate from "../assets/chocolate.png";
+import eggs from "../assets/eggs.png";
+import flour from "../assets/flour.png";
+import lettuce from "../assets/lettuce.png";
+import milk from "../assets/milk.png";
+import olive_oil from "../assets/olive_oil.png";
+import rice from "../assets/rice.png";
+import salt from "../assets/salt.png";
+import sugar from "../assets/sugar.png";
+import tomato from "../assets/tomato.png";
+import vanilla from "../assets/vanilla.png";
+
 const API_URL = 'http://localhost:3000';
 
 const RecipeDetails = () => {
@@ -164,6 +181,102 @@ const RecipeDetails = () => {
     ));
   };
 
+  // Enhanced ingredient mapping with French names
+  const ingredientImages = {
+    'chocolat pâtissier': chocolate,
+    'beurre': butter,
+    'sucre': sugar,
+    'farine': flour,
+    'sel': salt,
+    'sucre vanillé': vanilla,
+    'oeufs': eggs,
+    'lait': milk,
+    'huile d\'olive': olive_oil,
+    'riz': rice,
+    'tomate': tomato,
+    'poulet': chicken_breast,
+    'pain': bread,
+    'salade': lettuce,
+    'levure chimique': baking_powder,
+    'fromage': cheese,
+    'chocolate': chocolate,
+    'butter': butter,
+    'sugar': sugar,
+    'flour': flour,
+    'salt': salt,
+    'vanilla': vanilla,
+    'eggs': eggs,
+    'milk': milk,
+    'olive oil': olive_oil,
+    'rice': rice,
+    'tomato': tomato,
+    'chicken': chicken_breast,
+    'bread': bread,
+    'lettuce': lettuce,
+    'baking powder': baking_powder,
+    'cheese': cheese,
+  };
+
+  // Function to get ingredient image
+  const getIngredientImage = (ingredientText) => {
+    const lowerText = ingredientText.toLowerCase();
+    
+    for (const [key, image] of Object.entries(ingredientImages)) {
+      if (lowerText.includes(key.toLowerCase())) {
+        return image;
+      }
+    }
+    
+    return '/placeholder.svg';
+  };
+
+  // Enhanced ingredients display component
+  const IngredientsSection = ({ ingredients }) => {
+    if (!ingredients) return null;
+    
+    const ingredientsList = ingredients.split('\n').filter(line => line.trim());
+    
+    return (
+      <div className="mt-8">
+        <h3 className="text-lg font-semibold mb-4">Ingrédients</h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {ingredientsList.map((ingredient, index) => {
+            const trimmedIngredient = ingredient.trim();
+            const image = getIngredientImage(trimmedIngredient);
+            
+            const parts = trimmedIngredient.split(' ');
+            const quantity = parts[0];
+            const unit = parts[1] || '';
+            const name = parts.slice(2).join(' ') || parts.slice(1).join(' ');
+            
+            return (
+              <div key={index} className="flex flex-col items-center p-3 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
+                <div className="w-20 h-20 mb-2 flex items-center justify-center ">
+                  <img 
+                    src={image} 
+                    alt={name} 
+                    className="w-full h-full object-contain"
+                    onError={(e) => { 
+                      e.currentTarget.src = '/placeholder.svg';
+                    }}
+                  />
+                </div>
+                <div className="text-center">
+                  <div className="font-semibold text-sm text-gray-900">
+                    {quantity} {unit}
+                  </div>
+                  <div className="text-xs text-gray-600 mt-1">
+                    of {name}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   if (isLoading) return <p className="text-center text-gray-600">Loading recipe...</p>;
   if (error) return <p className="text-center text-red-600">Error: {error}</p>;
   if (!recipe) return <p className="text-center text-gray-600">Recipe not found.</p>;
@@ -243,6 +356,7 @@ const RecipeDetails = () => {
             </div>
           </div>
         </Card>
+        
         <div className="mt-8">
           <h3 className="text-lg font-semibold mb-3">Description</h3>
           <p className="text-gray-600 whitespace-pre-line">
@@ -258,17 +372,10 @@ const RecipeDetails = () => {
             </Button>
           )}
         </div>
-        <div className="mt-8">
-          <h3 className="text-lg font-semibold mb-3">Ingredients</h3>
-          <ul className="space-y-2">
-            {recipe.ingredients?.split('\n').map((ingredient, index) => (
-              <li key={index} className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
-                <span>{ingredient}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+
+        {/* Updated ingredients section */}
+        <IngredientsSection ingredients={recipe.ingredients} />
+
         <div className="mt-8">
           <h3 className="text-lg font-semibold mb-3">Instructions</h3>
           <ol className="space-y-3">
@@ -282,6 +389,7 @@ const RecipeDetails = () => {
             ))}
           </ol>
         </div>
+
         <div className="mt-8">
           <h3 className="text-lg font-semibold mb-3">Comments</h3>
           {token ? (
