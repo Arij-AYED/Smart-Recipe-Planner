@@ -10,8 +10,6 @@ import toast from 'react-hot-toast';
 import RecipeCard from './RecipeCard';
 import { set } from 'date-fns';
 
-import axios from 'axios';
-import toast from 'react-hot-toast';
 
 const API_URL = 'http://localhost:3000';
 
@@ -22,6 +20,8 @@ const IngredientSearch = () => {
   const [recipes, setRecipes] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+const [suggestedRecipes, setSuggestedRecipes] = useState<any[]>([]);
 
   const popularIngredients = [
     'Chicken Breast', 'Salmon', 'Ground Beef', 'Eggs', 'Rice', 'Pasta',
@@ -257,23 +257,28 @@ const IngredientSearch = () => {
             </Card>
           )}
 
-          {!loading && !error && recipes.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {recipes.map((recipe) => {
-                const matchPercentage = getMatchPercentage(recipe);
-                return (
-                  <div key={recipe._id} className="relative">
-                    <div className="absolute top-3 left-3 z-10">
-                      <Badge className="bg-green-500 text-white">
-                        {matchPercentage}% match
-                      </Badge>
-                    </div>
-                    <RecipeCard recipe={recipe} />
-                  </div>
-                );
-              })}
+          {/* Render AI-Suggested Recipes */}
+{!loading && !error && suggestedRecipes.length > 0 && (
+  <div className="space-y-4">
+    <h3 className="text-lg font-semibold text-purple-700">AI Suggested Recipes</h3>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {suggestedRecipes.map((recipe) => {
+        const matchPercentage = getMatchPercentage(recipe);
+        return (
+          <div key={recipe._id} className="relative">
+            <div className="absolute top-3 left-3 z-10">
+              <Badge className="bg-purple-600 text-white">
+                {matchPercentage}% match
+              </Badge>
             </div>
-          )}
+            <RecipeCard recipe={recipe} />
+          </div>
+        );
+      })}
+    </div>
+  </div>
+)}
+
 
           {/* Missing Ingredients Alert */}
           <Card className="bg-blue-50 border-blue-200">
