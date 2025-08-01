@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Plus, X, Search, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,8 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import RecipeCard from './RecipeCard';
-import { set } from 'date-fns';
-
 
 const API_URL = 'http://localhost:3000';
 
@@ -20,8 +17,8 @@ const IngredientSearch = () => {
   const [recipes, setRecipes] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-const [suggestedRecipes, setSuggestedRecipes] = useState<any[]>([]);
+  const [suggestedRecipes, setSuggestedRecipes] = useState<any[]>([]);
+  const [showAISuggestions, setShowAISuggestions] = useState(false);
 
   const popularIngredients = [
     'Chicken Breast', 'Salmon', 'Ground Beef', 'Eggs', 'Rice', 'Pasta',
@@ -34,7 +31,7 @@ const [suggestedRecipes, setSuggestedRecipes] = useState<any[]>([]);
     localStorage.setItem('availableIngredients', JSON.stringify(ingredients));
   }, [ingredients]);
 
-  // Fetch recipes based on selected ingredients
+  // Fetch recipes based on selected ingredients from the database
   useEffect(() => {
     const fetchRecipes = async () => {
       if (ingredients.length === 0) {
@@ -49,8 +46,8 @@ const [suggestedRecipes, setSuggestedRecipes] = useState<any[]>([]);
         const response = await axios.get(`${API_URL}/api/recipes/by-ingredients`, {
           params: { ingredients: ingredients.join(',') }
         });
-        console.log('Fetched recipes:', response.data);
-        setSuggestedRecipes(response.data);
+        console.log('Fetched recipes from database:', response.data);
+        setRecipes(response.data);
       } catch (err: any) {
         console.error('Error fetching recipes:', err.message);
         setError(err.response?.data?.message || 'Failed to fetch recipes');
@@ -62,7 +59,6 @@ const [suggestedRecipes, setSuggestedRecipes] = useState<any[]>([]);
 
     fetchRecipes();
   }, [ingredients]);
-
 
   const addIngredient = (ingredient: string) => {
     if (ingredient && !ingredients.includes(ingredient)) {
@@ -91,7 +87,6 @@ const [suggestedRecipes, setSuggestedRecipes] = useState<any[]>([]);
 
   const getMatchPercentage = (recipe: any) => {
     if (!recipe.ingredients) return 0;
-    // Split recipe ingredients string into an array
     const recipeIngredients = recipe.ingredients.split('\n').map((ing: string) => ing.trim().toLowerCase()).filter((ing: string) => ing);
     const matches = recipeIngredients.filter((ing: string) => 
       ingredients.some(userIng => 
@@ -101,18 +96,23 @@ const [suggestedRecipes, setSuggestedRecipes] = useState<any[]>([]);
     ).length;
     return Math.round((matches / recipeIngredients.length) * 100);
   };
-  const handleAISuggestions= async () => {
-    
+
+  // Handle AI suggestions
+  const handleAISuggestions = async () => {
+    setLoading(true);
     try {
-      const response = await axios.post('http://localhost:3000/api/ai-recipes', {
+      const response = await axios.post(`${API_URL}/api/ai-recipes`, {
         ingredients,
       });
-      setSuggestedRecipes(response.data);
-  }catch ( error) {
-    console.error('Error fetching Ai suggestions:',error);
-    toast.error('Failed to fetch AI suggestions');
-  }
-};
+      setSuggestedRecipes(response.data || []);
+      setShowAISuggestions(true);
+    } catch (error) {
+      console.error('Error fetching AI suggestions:', error);
+      toast.error('Failed to fetch AI suggestions');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -203,34 +203,35 @@ const [suggestedRecipes, setSuggestedRecipes] = useState<any[]>([]);
         </CardContent>
       </Card>
       {loading && (
-        <p className="text-center text-gray-500 text-sm"> Generating recipes with AI...</p>
+        <p className="text-center text-gray-500 text-sm">Generating recipes...</p>
       )}
 
       {/* AI Recipe Suggestions */}
       {ingredients.length > 0 && (
         <div className="space-y-6">
           <button
-          onClick={handleAISuggestions}
-          className="w-full text-left">
-          <Card className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-3">
-                <Sparkles className="w-6 h-6" />
-                <div>
-                  <h3 className="text-xl font-bold">AI Recipe Suggestions</h3>
-                  <p className="opacity-90">
-                    Based on your {ingredients.length} ingredients, here are perfect matches
-                  </p>
+            onClick={handleAISuggestions}
+            className="w-full text-left"
+          >
+            <Card className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-3">
+                  <Sparkles className="w-6 h-6" />
+                  <div>
+                    <h3 className="text-xl font-bold">AI Recipe Suggestions</h3>
+                    <p className="opacity-90">
+                      Based on your {ingredients.length} ingredients, generate new recipes
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
           </button>
 
           {loading && (
             <Card className="bg-gray-50">
               <CardContent className="p-6 text-center">
-                <p className="text-gray-600">Loading recipes...</p>
+                <p className="text-gray-600">Loading AI recipes...</p>
               </CardContent>
             </Card>
           )}
@@ -243,6 +244,51 @@ const [suggestedRecipes, setSuggestedRecipes] = useState<any[]>([]);
             </Card>
           )}
 
+          {/* Our Recipes */}
+          {!loading && !error && recipes.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-orange-700">Our Recipes</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {recipes.map((recipe) => {
+                  const matchPercentage = getMatchPercentage(recipe);
+                  return (
+                    <div key={recipe._id} className="relative">
+                      <div className="absolute top-3 left-3 z-10">
+                        <Badge className="bg-orange-600 text-white">
+                          {matchPercentage}% match
+                        </Badge>
+                      </div>
+                      <RecipeCard recipe={recipe} />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* AI Suggested Recipes */}
+          {showAISuggestions && !loading && !error && suggestedRecipes.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-purple-700">AI Suggested Recipes</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {suggestedRecipes.map((recipe) => {
+                  const matchPercentage = getMatchPercentage(recipe);
+                  return (
+                    <div key={recipe._id} className="relative">
+                      <div className="absolute top-3 left-3 z-10">
+                        <Badge className="bg-purple-600 text-white">
+                          {matchPercentage}% match
+                        </Badge>
+                      </div>
+                      <RecipeCard recipe={recipe} />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* No Recipes Found */}
           {!loading && !error && recipes.length === 0 && (
             <Card className="bg-gray-50 border-dashed border-2 border-gray-300">
               <CardContent className="p-12 text-center">
@@ -256,29 +302,6 @@ const [suggestedRecipes, setSuggestedRecipes] = useState<any[]>([]);
               </CardContent>
             </Card>
           )}
-
-          {/* Render AI-Suggested Recipes */}
-{!loading && !error && suggestedRecipes.length > 0 && (
-  <div className="space-y-4">
-    <h3 className="text-lg font-semibold text-purple-700">AI Suggested Recipes</h3>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {suggestedRecipes.map((recipe) => {
-        const matchPercentage = getMatchPercentage(recipe);
-        return (
-          <div key={recipe._id} className="relative">
-            <div className="absolute top-3 left-3 z-10">
-              <Badge className="bg-purple-600 text-white">
-                {matchPercentage}% match
-              </Badge>
-            </div>
-            <RecipeCard recipe={recipe} />
-          </div>
-        );
-      })}
-    </div>
-  </div>
-)}
-
 
           {/* Missing Ingredients Alert */}
           <Card className="bg-blue-50 border-blue-200">
