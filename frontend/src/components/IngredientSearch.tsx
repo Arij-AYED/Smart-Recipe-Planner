@@ -50,7 +50,7 @@ const [suggestedRecipes, setSuggestedRecipes] = useState<any[]>([]);
           params: { ingredients: ingredients.join(',') }
         });
         console.log('Fetched recipes:', response.data);
-        setRecipes(response.data);
+        setSuggestedRecipes(response.data);
       } catch (err: any) {
         console.error('Error fetching recipes:', err.message);
         setError(err.response?.data?.message || 'Failed to fetch recipes');
@@ -107,12 +107,12 @@ const [suggestedRecipes, setSuggestedRecipes] = useState<any[]>([]);
       const response = await axios.post('http://localhost:3000/api/ai-recipes', {
         ingredients,
       });
-      setSuggestedRecipes(response.data.recipe || []);
+      //setSuggestedRecipes(response.data.recipe || []);
   }catch ( error) {
     console.error('Error fetching Ai suggestions:',error);
     toast.error('Failed to fetch AI suggestions');
   }
-}
+};
 
   return (
     <div className="space-y-8">
