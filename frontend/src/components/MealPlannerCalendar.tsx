@@ -38,7 +38,7 @@ const MealPlannerCalendar = () => {
   useEffect(() => {
     const fetchRecipes = async () => {
       try {
-        const response = await axios.get(`${API_URL}/recipes`, {
+        const response = await axios.get(`${API_URL}/api/recipes`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setAvailableRecipes(response.data.map((recipe: any) => ({
@@ -405,7 +405,7 @@ const MealPlannerCalendar = () => {
       {/* Calendar Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
         {days.map((day, dayIndex) => (
-          <Card key={day} className="bg-white/80 backdrop-blur-sm border-orange-100">
+          <Card key={day} className="bg-white/80 backdrop-blur-sm border-blue-100">
             <CardHeader className="pb-3">
               <div className="text-center">
                 <CardTitle className="text-lg font-semibold text-gray-900">
@@ -568,7 +568,7 @@ const MealPlannerCalendar = () => {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-        <Card className="bg-white/80 backdrop-blur-sm border-orange-100">
+        <Card className="bg-white/80 backdrop-blur-sm border-blue-100">
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-orange-600">
               {totalPlannedMeals}

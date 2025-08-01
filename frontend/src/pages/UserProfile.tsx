@@ -71,7 +71,7 @@ const UserProfile = () => {
 
     try {
       console.log('Fetching user profile with token:', token); // Debug log
-      const response = await axios.get(`${API_URL}/auth/profile`, {
+      const response = await axios.get(`${API_URL}/api/auth/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       console.log('User profile response:', response.data); // Debug log
@@ -100,7 +100,7 @@ const UserProfile = () => {
   const fetchFavoriteRecipes = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/users/favorites`, {
+      const response = await axios.get(`${API_URL}/api/users/favorites`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       console.log('Favorite recipes response:', response.data); // Debug log
@@ -118,7 +118,7 @@ const UserProfile = () => {
   const fetchUserRecipes = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/recipes/my-recipes`, {
+      const response = await axios.get(`${API_URL}/api/recipes/my-recipes`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       console.log('User recipes response:', response.data); // Debug log
@@ -136,7 +136,7 @@ const UserProfile = () => {
   const handleSaveProfile = async () => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`${API_URL}/auth/profile`, editForm, {
+      await axios.put(`${API_URL}/api/auth/profile`, editForm, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -165,7 +165,7 @@ const UserProfile = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post(`${API_URL}/auth/upload-avatar`, formData, {
+      const response = await axios.post(`${API_URL}/api/auth/upload-avatar`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'

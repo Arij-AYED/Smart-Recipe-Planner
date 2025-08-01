@@ -31,7 +31,7 @@ const Index = () => {
         if (submittedSearchQuery) params.q = submittedSearchQuery;
         if (selectedGoal) params.goal = selectedGoal;
         console.log('Fetching recipes with params:', params);
-        const response = await axios.get(`${API_URL}/recipes`, { params });
+        const response = await axios.get(`${API_URL}/api/recipes`, { params });
         console.log('Recipes response:', response.data);
         setRecipes(response.data);
       } catch (error) {

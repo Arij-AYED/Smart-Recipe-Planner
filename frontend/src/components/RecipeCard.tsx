@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 const API_URL = 'http://localhost:3000';
 import axios from 'axios';
 
+
 interface Recipe {
   _id: string;
   title: string;
@@ -51,13 +52,13 @@ const RecipeCard = ({ recipe,user }: RecipeCardProps) => {
     }
     try{
       if(isLiked){
-        await axios.delete(`${API_URL}/users/favorites/${recipe._id}`, {
+        await axios.delete(`${API_URL}/api/users/favorites/${recipe._id}`, {
           headers :{ Authorization: `Bearer ${token}` }
       });
       setIsLiked(false);
       toast.success('Recipe removed from favorites');
       }else{
-        await axios.post(`${API_URL}/users/favorites/${recipe._id}`, {}, {
+        await axios.post(`${API_URL}/api/users/favorites/${recipe._id}`, {}, {
           headers :{ Authorization: `Bearer ${token}` },
       });
         setIsLiked(true);
@@ -96,7 +97,7 @@ const RecipeCard = ({ recipe,user }: RecipeCardProps) => {
       </div>
       
       <CardContent className="p-4 space-y-3">
-        <h3 className="font-semibold text-lg text-gray-900 group-hover:text-orange-600 transition-colors">
+        <h3 className="font-semibold text-lg text-gray-900 group-hover:text-blue-600 transition-colors">
           {recipe.title}
         </h3>
         
@@ -111,7 +112,7 @@ const RecipeCard = ({ recipe,user }: RecipeCardProps) => {
               <span>{recipe.servings}</span>
             </div>
           </div>
-          <div className="font-medium text-orange-600">
+          <div className="font-medium text-blue-600">
             {recipe.calories} cal
           </div>
         </div>
@@ -132,7 +133,7 @@ const RecipeCard = ({ recipe,user }: RecipeCardProps) => {
         <div className="pt-2">
           <Link to={`/recipe/${recipe._id}`}>
             <Button 
-              className="w-full bg-gradient-to-r from-orange-500 to-green-500 hover:from-orange-600 hover:to-green-600 text-white"
+              className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white"
             >
               View Recipe
             </Button>

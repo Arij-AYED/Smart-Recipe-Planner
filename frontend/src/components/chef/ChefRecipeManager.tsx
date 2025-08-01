@@ -92,10 +92,10 @@ export const ChefRecipeManager = () => {
         }
         console.log('Fetching recipes with token:', token);
         const [recipesResponse, tagsResponse] = await Promise.all([
-          axios.get(`${API_URL}/recipes/my-recipes`, {
+          axios.get(`${API_URL}/api/recipes/my-recipes`, {
             headers: { Authorization: `Bearer ${token}` }
           }),
-          axios.get(`${API_URL}/recipes/tags`)
+          axios.get(`${API_URL}/api/recipes/tags`)
         ]);
         console.log('User recipes response:', recipesResponse.data);
         console.log('Tags response:', tagsResponse.data);
@@ -146,7 +146,7 @@ export const ChefRecipeManager = () => {
       }
       console.log('Sending request with token:', token);
       if (editingRecipe) {
-        await axios.put(`${API_URL}/recipes/${editingRecipe._id}`, dataToSend, {
+        await axios.put(`${API_URL}/api/recipes/${editingRecipe._id}`, dataToSend, {
           headers: {
             'Content-Type': 'multipart/form-data',
             Authorization: `Bearer ${token}`
@@ -154,7 +154,7 @@ export const ChefRecipeManager = () => {
         });
         toast.success('Recipe updated successfully');
       } else {
-        const response = await axios.post(`${API_URL}/recipes`, dataToSend, {
+        const response = await axios.post(`${API_URL}/api/recipes`, dataToSend, {
           headers: {
             'Content-Type': 'multipart/form-data',
             Authorization: `Bearer ${token}`
@@ -163,7 +163,7 @@ export const ChefRecipeManager = () => {
         console.log('Created recipe:', response.data);
         toast.success('Recipe created successfully');
       }
-      const response = await axios.get(`${API_URL}/recipes/my-recipes`, {
+      const response = await axios.get(`${API_URL}/api/recipes/my-recipes`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setRecipes(response.data);
@@ -205,10 +205,10 @@ export const ChefRecipeManager = () => {
         navigate('/login');
         return;
       }
-      await axios.delete(`${API_URL}/recipes/${id}`, {
+      await axios.delete(`${API_URL}/api/recipes/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      const response = await axios.get(`${API_URL}/recipes/my-recipes`, {
+      const response = await axios.get(`${API_URL}/api/recipes/my-recipes`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setRecipes(response.data);
@@ -342,7 +342,7 @@ export const ChefRecipeManager = () => {
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-orange-500 hover:bg-orange-600">
+            <Button className="bg-blue-400 hover:bg-blue-600">
               <Plus className="h-4 w-4 mr-2" />
               {editingRecipe ? 'Edit Recipe' : 'Create Recipe'}
             </Button>

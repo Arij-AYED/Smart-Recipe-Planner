@@ -43,7 +43,9 @@ export const RecipePreview: React.FC<RecipePreviewProps> = ({
             </Badge>
           </div>
           <DialogDescription>
+
             Recipe by {recipe.chefId?.firstname ? `${recipe.chefId.firstname} ${recipe.chefId.lastname || ''}` : 'Unknown Chef'} • Submitted on {recipe.createdAt ? new Date(recipe.createdAt).toLocaleDateString() : new Date().toLocaleDateString()}
+
           </DialogDescription>
         </DialogHeader>
 

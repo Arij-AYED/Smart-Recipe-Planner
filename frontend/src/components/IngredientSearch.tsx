@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Plus, X, Search, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,6 +8,10 @@ import { Badge } from '@/components/ui/badge';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import RecipeCard from './RecipeCard';
+import { set } from 'date-fns';
+
+import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const API_URL = 'http://localhost:3000';
 
@@ -58,6 +63,7 @@ const IngredientSearch = () => {
     fetchRecipes();
   }, [ingredients]);
 
+
   const addIngredient = (ingredient: string) => {
     if (ingredient && !ingredients.includes(ingredient)) {
       setIngredients([...ingredients, ingredient]);
@@ -95,6 +101,18 @@ const IngredientSearch = () => {
     ).length;
     return Math.round((matches / recipeIngredients.length) * 100);
   };
+  const handleAISuggestions= async () => {
+    
+    try {
+      const response = await axios.post('http://localhost:3000/api/ai-recipes', {
+        ingredients,
+      });
+      setSuggestedRecipes(response.data.recipe || []);
+  }catch ( error) {
+    console.error('Error fetching Ai suggestions:',error);
+    toast.error('Failed to fetch AI suggestions');
+  }
+}
 
   return (
     <div className="space-y-8">
@@ -184,10 +202,16 @@ const IngredientSearch = () => {
           </div>
         </CardContent>
       </Card>
+      {loading && (
+        <p className="text-center text-gray-500 text-sm"> Generating recipes with AI...</p>
+      )}
 
       {/* AI Recipe Suggestions */}
       {ingredients.length > 0 && (
         <div className="space-y-6">
+          <button
+          onClick={handleAISuggestions}
+          className="w-full text-left">
           <Card className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0">
             <CardContent className="p-6">
               <div className="flex items-center space-x-3">
@@ -201,6 +225,7 @@ const IngredientSearch = () => {
               </div>
             </CardContent>
           </Card>
+          </button>
 
           {loading && (
             <Card className="bg-gray-50">
