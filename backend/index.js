@@ -11,10 +11,13 @@ const mealPlanRoutes = require('./routes/mealPlans');
 const path = require('path');
 
 
+
 const app = express();
+const aiRecipesRoute= require('./routes/aiRecipes');
+app.use(express.json());
 app.use(cors());
 
-
+app.use('/api/ai-recipes', aiRecipesRoute);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/uploads',express.static('public/uploads'));
 
@@ -24,7 +27,7 @@ app.get(/^\/(?!api).*/, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'dest', 'index.html'));
 });
 
-app.use(express.json());
+
 //Connect to mongoDB
 mongoose.connect(process.env.MONGO_URI)
 .then(() => console.log('MongoDB connected'))
@@ -40,7 +43,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/meal-plans', mealPlanRoutes);
 //app.use('/api/comments', commentRoutes);
 
-
+app.use(express.json());
 
 const PORT = process.env.PORT ;
 app.listen(PORT, () => {

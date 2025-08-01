@@ -1,11 +1,15 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, X, Search, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import RecipeCard from './RecipeCard';
+import { set } from 'date-fns';
+
+import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const IngredientSearch = () => {
   const [ingredients, setIngredients] = useState<string[]>(['Chicken', 'Tomatoes', 'Garlic']);
@@ -18,7 +22,7 @@ const IngredientSearch = () => {
     'Cheese', 'Yogurt', 'Milk', 'Olive Oil', 'Salt', 'Black Pepper'
   ];
 
-  const suggestedRecipes = [
+  /*const suggestedRecipes = [
     {
       _id: "1",
       title: "Garlic Chicken with Tomatoes",
@@ -41,7 +45,36 @@ const IngredientSearch = () => {
       calories: 350,
       ingredients: ["Chicken", "Tomatoes", "Garlic", "Herbs"]
     }
-  ];
+  ];*/
+  const [suggestedRecipes, setSuggestedRecipes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() =>{
+    const fetchRecipes=async () => {
+      if (ingredients.length ===0) return;
+      setLoading ( true);
+      setSuggestedRecipes([]);
+
+    
+    try {
+      const response = await fetch('/api/ai-recipes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ingredients }),
+      });
+
+      const data = await response.json();
+      setSuggestedRecipes(data);
+    }catch ( err){
+      console.error('Failed to fetch recipes:',err);
+
+    }finally {
+      setLoading(false);
+    }
+  };
+  fetchRecipes();
+}, [ingredients]);
+  
 
   const addIngredient = (ingredient: string) => {
     if (ingredient && !ingredients.includes(ingredient)) {
@@ -77,6 +110,18 @@ const IngredientSearch = () => {
     ).length;
     return Math.round((matches / recipe.ingredients.length) * 100);
   };
+  const handleAISuggestions= async () => {
+    
+    try {
+      const response = await axios.post('http://localhost:3000/api/ai-recipes', {
+        ingredients,
+      });
+      setSuggestedRecipes(response.data.recipe || []);
+  }catch ( error) {
+    console.error('Error fetching Ai suggestions:',error);
+    toast.error('Failed to fetch AI suggestions');
+  }
+}
 
   return (
     <div className="space-y-8">
@@ -166,10 +211,16 @@ const IngredientSearch = () => {
           </div>
         </CardContent>
       </Card>
+      {loading && (
+        <p className="text-center text-gray-500 text-sm"> Generating recipes with AI...</p>
+      )}
 
       {/* AI Recipe Suggestions */}
       {ingredients.length > 0 && (
         <div className="space-y-6">
+          <button
+          onClick={handleAISuggestions}
+          className="w-full text-left">
           <Card className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0">
             <CardContent className="p-6">
               <div className="flex items-center space-x-3">
@@ -183,6 +234,7 @@ const IngredientSearch = () => {
               </div>
             </CardContent>
           </Card>
+          </button>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {suggestedRecipes.map((recipe) => {
