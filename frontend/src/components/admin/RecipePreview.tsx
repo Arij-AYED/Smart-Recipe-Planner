@@ -37,13 +37,13 @@ export const RecipePreview: React.FC<RecipePreviewProps> = ({
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-2xl">{recipe.title}</DialogTitle>
+            <DialogTitle className="text-2xl">{recipe.title || 'Untitled Recipe'}</DialogTitle>
             <Badge className={getStatusColor(recipe.status)}>
-              {recipe.status}
+              {recipe.status || 'Unknown'}
             </Badge>
           </div>
           <DialogDescription>
-            Recipe by {recipe.chefId || 'Unknown Chef'} • Submitted on {new Date().toLocaleDateString()}
+            Recipe by {recipe.chefId?.firstname ? `${recipe.chefId.firstname} ${recipe.chefId.lastname || ''}` : 'Unknown Chef'} • Submitted on {recipe.createdAt ? new Date(recipe.createdAt).toLocaleDateString() : new Date().toLocaleDateString()}
           </DialogDescription>
         </DialogHeader>
 
@@ -52,8 +52,9 @@ export const RecipePreview: React.FC<RecipePreviewProps> = ({
           <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
             <img
               src={`${API_URL}${recipe.image || '/placeholder.svg'}`}
-              alt={recipe.title}
+              alt={recipe.title || 'Recipe'}
               className="w-full h-full object-cover"
+              onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }}
             />
           </div>
 
@@ -63,27 +64,27 @@ export const RecipePreview: React.FC<RecipePreviewProps> = ({
               <Clock className="h-5 w-5 text-orange-600" />
               <div>
                 <p className="text-sm text-gray-600">Cook Time</p>
-                <p className="font-semibold">{recipe.cookTime}</p>
+                <p className="font-semibold">{recipe.cookTime || 'N/A'}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-orange-600" />
               <div>
                 <p className="text-sm text-gray-600">Servings</p>
-                <p className="font-semibold">{recipe.servings}</p>
+                <p className="font-semibold">{recipe.servings || 'N/A'}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <ChefHat className="h-5 w-5 text-orange-600" />
               <div>
                 <p className="text-sm text-gray-600">Difficulty</p>
-                <p className="font-semibold">{recipe.difficulty}</p>
+                <p className="font-semibold">{recipe.difficulty || 'N/A'}</p>
               </div>
             </div>
             {recipe.calories > 0 && (
               <div className="flex items-center gap-2">
                 <p className="text-sm text-gray-600">Calories</p>
-                <p className="font-semibold">{recipe.calories}</p>
+                <p className="font-semibold">{recipe.calories} cal</p>
               </div>
             )}
           </div>
@@ -103,19 +104,19 @@ export const RecipePreview: React.FC<RecipePreviewProps> = ({
           {/* Description */}
           <div>
             <h3 className="text-lg font-semibold mb-2">Description</h3>
-            <p className="text-gray-700 leading-relaxed">{recipe.description}</p>
+            <p className="text-gray-700 leading-relaxed">{recipe.description || 'No description available'}</p>
           </div>
 
           {/* Ingredients */}
           <div>
             <h3 className="text-lg font-semibold mb-3">Ingredients</h3>
             <ul className="space-y-2">
-              {recipe.ingredients?.split('\n').map((ingredient: string, index: number) => (
+              {recipe.ingredients?.split('\n').filter(line => line.trim()).map((ingredient: string, index: number) => (
                 <li key={index} className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
                   <span>{ingredient}</span>
                 </li>
-              ))}
+              )) || <li className="text-gray-600">No ingredients listed</li>}
             </ul>
           </div>
 
@@ -123,14 +124,14 @@ export const RecipePreview: React.FC<RecipePreviewProps> = ({
           <div>
             <h3 className="text-lg font-semibold mb-3">Instructions</h3>
             <ol className="space-y-3">
-              {recipe.instructions?.split('\n').map((instruction: string, index: number) => (
+              {recipe.instructions?.split('\n').filter(line => line.trim()).map((instruction: string, index: number) => (
                 <li key={index} className="flex gap-3">
                   <span className="flex-shrink-0 w-6 h-6 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-sm font-semibold">
                     {index + 1}
                   </span>
                   <span className="text-gray-700">{instruction}</span>
                 </li>
-              ))}
+              )) || <li className="text-gray-600">No instructions provided</li>}
             </ol>
           </div>
 

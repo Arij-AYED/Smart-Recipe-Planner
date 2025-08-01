@@ -1,16 +1,22 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, X, Search, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import axios from 'axios';
+import toast from 'react-hot-toast';
 import RecipeCard from './RecipeCard';
 
+const API_URL = 'http://localhost:3000';
+
 const IngredientSearch = () => {
-  const [ingredients, setIngredients] = useState<string[]>(['Chicken', 'Tomatoes', 'Garlic']);
+  const [ingredients, setIngredients] = useState<string[]>(JSON.parse(localStorage.getItem('availableIngredients') || '[]'));
   const [newIngredient, setNewIngredient] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [recipes, setRecipes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const popularIngredients = [
     'Chicken Breast', 'Salmon', 'Ground Beef', 'Eggs', 'Rice', 'Pasta',
@@ -18,30 +24,39 @@ const IngredientSearch = () => {
     'Cheese', 'Yogurt', 'Milk', 'Olive Oil', 'Salt', 'Black Pepper'
   ];
 
-  const suggestedRecipes = [
-    {
-      _id: "1",
-      title: "Garlic Chicken with Tomatoes",
-      image: "https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=400&h=300&fit=crop",
-      cookTime: "30 min",
-      servings: 4,
-      difficulty: "Easy",
-      tags: ["High Protein", "Mediterranean", "One Pan"],
-      calories: 380,
-      ingredients: ["Chicken", "Tomatoes", "Garlic", "Olive Oil"]
-    },
-    {
-      _id: "2",
-      title: "Chicken Tomato Skillet",
-      image: "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=400&h=300&fit=crop",
-      cookTime: "25 min",
-      servings: 3,
-      difficulty: "Easy",
-      tags: ["Quick", "One Pan", "Comfort Food"],
-      calories: 350,
-      ingredients: ["Chicken", "Tomatoes", "Garlic", "Herbs"]
-    }
-  ];
+  // Save ingredients to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('availableIngredients', JSON.stringify(ingredients));
+  }, [ingredients]);
+
+  // Fetch recipes based on selected ingredients
+  useEffect(() => {
+    const fetchRecipes = async () => {
+      if (ingredients.length === 0) {
+        setRecipes([]);
+        setError(null);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await axios.get(`${API_URL}/recipes/by-ingredients`, {
+          params: { ingredients: ingredients.join(',') }
+        });
+        console.log('Fetched recipes:', response.data);
+        setRecipes(response.data);
+      } catch (err: any) {
+        console.error('Error fetching recipes:', err.message);
+        setError(err.response?.data?.message || 'Failed to fetch recipes');
+        toast.error(err.response?.data?.message || 'Failed to fetch recipes');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecipes();
+  }, [ingredients]);
 
   const addIngredient = (ingredient: string) => {
     if (ingredient && !ingredients.includes(ingredient)) {
@@ -69,13 +84,16 @@ const IngredientSearch = () => {
   };
 
   const getMatchPercentage = (recipe: any) => {
-    const matches = recipe.ingredients.filter((ing: string) => 
+    if (!recipe.ingredients) return 0;
+    // Split recipe ingredients string into an array
+    const recipeIngredients = recipe.ingredients.split('\n').map((ing: string) => ing.trim().toLowerCase()).filter((ing: string) => ing);
+    const matches = recipeIngredients.filter((ing: string) => 
       ingredients.some(userIng => 
         ing.toLowerCase().includes(userIng.toLowerCase()) ||
         userIng.toLowerCase().includes(ing.toLowerCase())
       )
     ).length;
-    return Math.round((matches / recipe.ingredients.length) * 100);
+    return Math.round((matches / recipeIngredients.length) * 100);
   };
 
   return (
@@ -184,21 +202,53 @@ const IngredientSearch = () => {
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {suggestedRecipes.map((recipe) => {
-              const matchPercentage = getMatchPercentage(recipe);
-              return (
-                <div key={recipe._id} className="relative">
-                  <div className="absolute top-3 left-3 z-10">
-                    <Badge className="bg-green-500 text-white">
-                      {matchPercentage}% match
-                    </Badge>
+          {loading && (
+            <Card className="bg-gray-50">
+              <CardContent className="p-6 text-center">
+                <p className="text-gray-600">Loading recipes...</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {error && (
+            <Card className="bg-red-50 border-red-200">
+              <CardContent className="p-6">
+                <p className="text-red-700">{error}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {!loading && !error && recipes.length === 0 && (
+            <Card className="bg-gray-50 border-dashed border-2 border-gray-300">
+              <CardContent className="p-12 text-center">
+                <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No Recipes Found
+                </h3>
+                <p className="text-gray-600">
+                  Try adding more ingredients or different combinations to find matching recipes.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {!loading && !error && recipes.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {recipes.map((recipe) => {
+                const matchPercentage = getMatchPercentage(recipe);
+                return (
+                  <div key={recipe._id} className="relative">
+                    <div className="absolute top-3 left-3 z-10">
+                      <Badge className="bg-green-500 text-white">
+                        {matchPercentage}% match
+                      </Badge>
+                    </div>
+                    <RecipeCard recipe={recipe} />
                   </div>
-                  <RecipeCard recipe={recipe} />
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
 
           {/* Missing Ingredients Alert */}
           <Card className="bg-blue-50 border-blue-200">

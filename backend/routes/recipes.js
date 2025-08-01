@@ -65,6 +65,58 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get recipes by ingredients
+router.get('/by-ingredients', async (req, res) => {
+  try {
+    const { ingredients } = req.query;
+    if (!ingredients) {
+      return res.status(400).json({ message: 'Ingredients query parameter is required' });
+    }
+    const ingredientList = ingredients.split(',').map(ing => ing.trim());
+    if (ingredientList.length === 0) {
+      return res.status(400).json({ message: 'At least one ingredient is required' });
+    }
+
+    // Build regex for each ingredient for case-insensitive partial matching
+    const ingredientRegex = ingredientList.map(ing => new RegExp(ing, 'i'));
+
+    // Find recipes where any ingredient matches
+    const recipes = await Recipe.find({
+      status: 'Approved',
+      ingredients: { $regex: ingredientRegex.map(r => r.source).join('|'), $options: 'i' }
+    }).populate('chefId', 'firstname lastname');
+
+    console.log(`Fetched ${recipes.length} recipes for ingredients:`, ingredientList);
+    res.json(recipes);
+  } catch (err) {
+    console.error('Error fetching recipes by ingredients:', err.message);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Get multiple recipes by IDs
+router.post('/bulk', async (req, res) => {
+  try {
+    const { recipeIds } = req.body;
+    if (!Array.isArray(recipeIds) || recipeIds.length === 0) {
+      return res.status(400).json({ message: 'recipeIds must be a non-empty array' });
+    }
+    const validIds = recipeIds.filter(id => mongoose.isValidObjectId(id));
+    if (validIds.length === 0) {
+      return res.status(400).json({ message: 'No valid recipe IDs provided' });
+    }
+    const recipes = await Recipe.find({
+      _id: { $in: validIds },
+      status: 'Approved'
+    }).populate('chefId', 'firstname lastname');
+    console.log(`Fetched ${recipes.length} recipes for IDs:`, validIds);
+    res.json(recipes);
+  } catch (err) {
+    console.error('Error fetching recipes by IDs:', err.message);
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // Get all available tags
 router.get('/tags', async (req, res) => {
   try {
@@ -260,6 +312,9 @@ router.get('/:id/comments', async (req, res) => {
 // Like a comment
 router.post('/comments/:commentId/like', authenticate, async (req, res) => {
   try {
+    if (!mongoose.isValidObjectId(req.params.commentId)) {
+      return res.status(400).json({ message: 'Invalid comment ID format' });
+    }
     const comment = await Comment.findById(req.params.commentId);
     if (!comment) {
       return res.status(404).json({ message: 'Comment not found' });
@@ -285,6 +340,9 @@ router.post('/comments/:commentId/like', authenticate, async (req, res) => {
 // Reply to a comment
 router.post('/comments/:commentId/reply', authenticate, async (req, res) => {
   try {
+    if (!mongoose.isValidObjectId(req.params.commentId)) {
+      return res.status(400).json({ message: 'Invalid comment ID format' });
+    }
     const { reply } = req.body;
     if (!reply) {
       return res.status(400).json({ message: 'Reply text is required' });
