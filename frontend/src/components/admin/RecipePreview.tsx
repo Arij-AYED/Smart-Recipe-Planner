@@ -4,6 +4,23 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Clock, Users, ChefHat, Check, X } from 'lucide-react';
 
+import baking_powder from "../../assets/baking_powder.png";
+import bread from "../../assets/bread.png";
+import butter from "../../assets/butter.png";
+import cheese from "../../assets/cheese.png";
+import chicken_breast from "../../assets/chicken_breast.png";
+import chocolate from "../../assets/chocolate.png";
+import eggs from "../../assets/eggs.png";
+import flour from "../../assets/flour.png";
+import lettuce from "../../assets/lettuce.png";
+import milk from "../../assets/milk.png";
+import olive_oil from "../../assets/olive_oil.png";
+import rice from "../../assets/rice.png";
+import salt from "../../assets/salt.png";
+import sugar from "../../assets/sugar.png";
+import tomato from "../../assets/tomato.png";
+import vanilla from "../../assets/vanilla.png";
+
 interface RecipePreviewProps {
   recipe: any;
   isOpen: boolean;
@@ -32,6 +49,55 @@ export const RecipePreview: React.FC<RecipePreviewProps> = ({
     }
   };
 
+  // Mapping of ingredient names to their image paths
+  const ingredientImages = {
+    'chocolat pâtissier': chocolate,
+    'beurre': butter,
+    'sucre': sugar,
+    'farine': flour,
+    'sel': salt,
+    'sucre vanillé': vanilla,
+    'oeufs': eggs,
+    'lait': milk,
+    'huile d\'olive': olive_oil,
+    'riz': rice,
+    'tomate': tomato,
+    'poulet': chicken_breast,
+    'pain': bread,
+    'salade': lettuce,
+    'levure chimique': baking_powder,
+    'fromage': cheese,
+    'chocolate': chocolate,
+    'butter': butter,
+    'sugar': sugar,
+    'flour': flour,
+    'salt': salt,
+    'vanilla': vanilla,
+    'eggs': eggs,
+    'milk': milk,
+    'olive oil': olive_oil,
+    'rice': rice,
+    'tomato': tomato,
+    'chicken': chicken_breast,
+    'bread': bread,
+    'lettuce': lettuce,
+    'baking powder': baking_powder,
+    'cheese': cheese,
+  };
+
+  // Function to get ingredient image
+  const getIngredientImage = (ingredientText: string) => {
+    const lowerText = ingredientText.toLowerCase();
+    
+    for (const [key, image] of Object.entries(ingredientImages)) {
+      if (lowerText.includes(key.toLowerCase())) {
+        return image;
+      }
+    }
+    
+    return '/placeholder.svg';
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -43,9 +109,7 @@ export const RecipePreview: React.FC<RecipePreviewProps> = ({
             </Badge>
           </div>
           <DialogDescription>
-
             Recipe by {recipe.chefId?.firstname ? `${recipe.chefId.firstname} ${recipe.chefId.lastname || ''}` : 'Unknown Chef'} • Submitted on {recipe.createdAt ? new Date(recipe.createdAt).toLocaleDateString() : new Date().toLocaleDateString()}
-
           </DialogDescription>
         </DialogHeader>
 
@@ -96,7 +160,7 @@ export const RecipePreview: React.FC<RecipePreviewProps> = ({
             <div>
               <h3 className="text-lg font-semibold mb-2">Tags</h3>
               <div className="flex flex-wrap gap-1">
-                {recipe.tags.map((tag) => (
+                {recipe.tags.map((tag: string) => (
                   <Badge key={tag} className="bg-blue-100 text-blue-800">{tag}</Badge>
                 ))}
               </div>
@@ -111,22 +175,48 @@ export const RecipePreview: React.FC<RecipePreviewProps> = ({
 
           {/* Ingredients */}
           <div>
-            <h3 className="text-lg font-semibold mb-3">Ingredients</h3>
-            <ul className="space-y-2">
-              {recipe.ingredients?.split('\n').filter(line => line.trim()).map((ingredient: string, index: number) => (
-                <li key={index} className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
-                  <span>{ingredient}</span>
-                </li>
-              )) || <li className="text-gray-600">No ingredients listed</li>}
-            </ul>
+            <h3 className="text-lg font-semibold mb-3">Ingrédients</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {recipe.ingredients?.split('\n').filter((line: string) => line.trim()).map((ingredient: string, index: number) => {
+                const trimmedIngredient = ingredient.trim();
+                const image = getIngredientImage(trimmedIngredient);
+                
+                const parts = trimmedIngredient.split(' ');
+                const quantity = parts[0];
+                const unit = parts[1] || '';
+                const name = parts.slice(2).join(' ') || parts.slice(1).join(' ');
+                
+                return (
+                  <div key={index} className="flex flex-col items-center p-2 bg-gray-50 rounded-lg">
+                    <div className="w-20 h-20 mb-2 flex items-center justify-center">
+                      <img 
+                        src={image} 
+                        alt={name} 
+                        className="w-full h-full object-contain"
+                        onError={(e) => { 
+                          e.currentTarget.src = '/placeholder.svg';
+                        }}
+                      />
+                    </div>
+                    <div className="text-center">
+                      <div className="font-semibold text-xs text-gray-900">
+                        {quantity} {unit}
+                      </div>
+                      <div className="text-xs text-gray-600 mt-1">
+                        of {name}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }) || <div className="text-gray-600">No ingredients provided</div>}
+            </div>
           </div>
 
           {/* Instructions */}
           <div>
             <h3 className="text-lg font-semibold mb-3">Instructions</h3>
             <ol className="space-y-3">
-              {recipe.instructions?.split('\n').filter(line => line.trim()).map((instruction: string, index: number) => (
+              {recipe.instructions?.split('\n').filter((line: string) => line.trim()).map((instruction: string, index: number) => (
                 <li key={index} className="flex gap-3">
                   <span className="flex-shrink-0 w-6 h-6 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-sm font-semibold">
                     {index + 1}
